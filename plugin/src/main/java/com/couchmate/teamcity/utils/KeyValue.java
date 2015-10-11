@@ -1,5 +1,7 @@
 package com.couchmate.teamcity.utils;
 
+import static com.couchmate.teamcity.utils.CommonUtils.isNullOrEmpty;
+
 /**
  * Created by mjo20 on 10/10/2015.
  */
@@ -17,6 +19,7 @@ public class KeyValue {
             final String key,
             final String value
     ){
+        if(isNullOrEmpty(key)) throw new IllegalArgumentException("Must provide a valid key");
         this.key = key;
         this.value = value;
     }

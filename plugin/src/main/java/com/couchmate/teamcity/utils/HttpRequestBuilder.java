@@ -17,7 +17,7 @@ import static com.couchmate.teamcity.utils.CommonUtils.isNullOrEmpty;
 /**
  * Created by mjo20 on 10/10/2015.
  */
-public class HttpRequestBuilder {
+public final class HttpRequestBuilder {
 
     private HttpRequestBase httpRequest = null;
     private URI uri = null;
@@ -63,7 +63,8 @@ public class HttpRequestBuilder {
     }
 
     public HttpRequestBuilder setParam(String key, String value){
-        this.params.add(new KeyValue(key, value));
+        if(isNullOrEmpty(key)) throw new IllegalArgumentException("Must provide a valid param");
+        else this.params.add(new KeyValue(key, value));
         return this;
     }
 
@@ -100,7 +101,7 @@ public class HttpRequestBuilder {
         if(httpRequest instanceof HttpGet) httpRequest.setURI(this.uri);
         if(httpRequest instanceof HttpPost) {
             httpRequest.setURI(this.uri);
-            ((HttpPost) httpRequest).setEntity(this.body);
+            if(this.body != null) ((HttpPost) httpRequest).setEntity(this.body);
         }
 
         return httpRequest;
