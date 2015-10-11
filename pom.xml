@@ -31,6 +31,5 @@
   <modules>
     <module>plugin</module>
     <module>build</module>
-    <module>common</module>
   </modules>
 </project>
