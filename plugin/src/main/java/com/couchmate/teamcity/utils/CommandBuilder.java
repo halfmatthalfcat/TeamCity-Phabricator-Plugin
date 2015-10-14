@@ -3,7 +3,9 @@ package com.couchmate.teamcity.utils;
 import com.couchmate.teamcity.TCPhabException;
 
 import java.io.BufferedOutputStream;
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.IllegalFormatCodePointException;
 import java.util.IllegalFormatException;
@@ -19,13 +21,27 @@ import static com.couchmate.teamcity.utils.CommonUtils.isNullOrEmpty;
 public final class CommandBuilder {
 
     private final Runtime runtime = Runtime.getRuntime();
+    private String path = null;
     private String command = null;
+    private String action = null;
+    private String workingDir = null;
     private List<String> args = new ArrayList<String>();
-    private CommandListener commandListener;
+
+    public CommandBuilder setWorkingDir(String workingDir){
+        if(isNullOrEmpty(workingDir)) throw new IllegalArgumentException("Must provide a valid working directory");
+        else this.workingDir = workingDir;
+        return this;
+    }
 
     public CommandBuilder setCommand(String cmd){
         if(isNullOrEmpty(cmd)) throw new IllegalArgumentException("Must provide a command");
         else this.command = cmd;
+        return this;
+    }
+
+    public CommandBuilder setAction(String action){
+        if(isNullOrEmpty(action)) throw new IllegalArgumentException("Must provide a valid action");
+        else this.action = action;
         return this;
     }
 
@@ -100,19 +116,15 @@ public final class CommandBuilder {
         return this;
     }
 
-    public CommandBuilder setCommandListener(final CommandListener commandListener){
-        this.commandListener = commandListener;
-        return this;
-    }
-
     public Command build() throws TCPhabException {
         if(isNullOrEmpty(this.command)) throw new TCPhabException("Must provide a valid command");
         else this.args.add(0, command);
+        if(!isNullOrEmpty(this.action)) this.args.add(1, action);
 
         return new Command(
                 this.runtime,
                 (String[])this.args.toArray(),
-                this.commandListener != null ? this.commandListener : null
+                this.workingDir
         );
     }
 
@@ -126,30 +138,30 @@ public final class CommandBuilder {
         else throw new IllegalArgumentException(String.format("%s is not a valid flag", flag));
     }
 
-    class Command {
+    public class Command {
         private final Runtime runtime;
         private final String[] args;
-        private final CommandListener commandListener;
+        private final File workingDir;
         private Process process;
 
         private Command(){
             this.runtime = null;
             this.args = null;
-            this.commandListener = null;
+            this.workingDir = null;
         }
 
         public Command(
                 final Runtime runtime,
                 final String[] args,
-                final CommandListener commandListener
+                final String workingDir
         ){
             this.runtime = runtime;
             this.args = args;
-            this.commandListener = commandListener;
+            this.workingDir = isNullOrEmpty(workingDir) ? null : new File(workingDir);
         }
 
         public int exec(){
-            try { this.process = this.runtime.exec(args); return this.process.waitFor(); }
+            try { this.process = this.runtime.exec(args, null, workingDir); return this.process.waitFor(); }
             catch (IOException | InterruptedException e) { return 666; }
         }
 
