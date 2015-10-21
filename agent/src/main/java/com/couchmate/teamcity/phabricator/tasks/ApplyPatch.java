@@ -27,7 +27,7 @@ public class ApplyPatch extends Task {
         logger.message(String.format("Phabricator Plugin: Applying Differential Patch %s", appConfig.getDiffId()));
         this.gitClient = new GitClient(this.appConfig.getWorkingDir());
         this.arcanistClient = new ArcanistClient(this.appConfig.getConduitToken(), this.appConfig.getWorkingDir());
-        this.conduitClient = new ConduitClient(this.appConfig.getConduitURL(), this.appConfig.getConduitToken());
+        this.conduitClient = new ConduitClient(this.appConfig.getPhabricatorUrl(), this.appConfig.getConduitToken());
     }
 
     @Override

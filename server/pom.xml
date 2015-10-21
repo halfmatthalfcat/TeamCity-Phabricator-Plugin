@@ -8,6 +8,7 @@
   </parent>
   <artifactId>server</artifactId>
   <packaging>jar</packaging>
+
   <dependencies>
 
     <dependency>

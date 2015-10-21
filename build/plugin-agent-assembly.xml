@@ -7,7 +7,7 @@
     </formats>
     <files>
         <file>
-            <source>../teamcity-phabricator-plugin-agent/teamcity-plugin.xml</source>
+            <source>../agent/teamcity-plugin.xml</source>
             <outputDirectory>/</outputDirectory>
         </file>
     </files>
@@ -15,8 +15,8 @@
         <moduleSet>
             <useAllReactorProjects>true</useAllReactorProjects>
             <includes>
-                <include>com.couchmate.teamcity.phabricator:teamcity-phabricator-plugin-agent</include>
-                <include>com.couchmate.teamcity.phabricator:teamcity-phabricator-plugin-common</include>
+                <include>com.couchmate.teamcity.phabricator:agent</include>
+                <include>com.couchmate.teamcity.phabricator:common</include>
             </includes>
             <binaries>
                 <outputDirectory>lib</outputDirectory>

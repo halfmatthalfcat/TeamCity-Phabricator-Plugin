@@ -11,7 +11,7 @@
          <outputDirectory>/</outputDirectory>
      </file> 
      <file>
-         <source>target/teamcity-phabricator-plugin-agent.zip</source>
+         <source>target/agent.zip</source>
          <outputDirectory>agent</outputDirectory>
      </file> 
   </files>
@@ -19,8 +19,8 @@
     <moduleSet>
        <useAllReactorProjects>true</useAllReactorProjects>
        <includes>
-           <include>com.couchmate.teamcity.phabricator:teamcity-phabricator-plugin-server</include>
-           <include>com.couchmate.teamcity.phabricator:teamcity-phabricator-plugin-common</include>
+           <include>com.couchmate.teamcity.phabricator:server</include>
+           <include>com.couchmate.teamcity.phabricator:common</include>
        </includes> 
        <binaries>
            <outputDirectory>server</outputDirectory>
