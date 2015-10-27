@@ -22,14 +22,12 @@ public class PhabricatorPlugin extends BuildFeature {
             @NotNull final PluginDescriptor pluginDescriptor,
             @NotNull final WebControllerManager webControllerManager
     ){
-        final String jsp = pluginDescriptor.getPluginResourcesPath("tcPhabSettings.jsp");
+        final String jsp = pluginDescriptor.getPluginResourcesPath("/tcPhabSettings.jsp");
         final String html = pluginDescriptor.getPluginResourcesPath("tcPhabSettings.html");
 
         webControllerManager.registerController(html, new BaseController() {
             @Override
             protected ModelAndView doHandle(@NotNull HttpServletRequest httpServletRequest, @NotNull HttpServletResponse httpServletResponse) throws Exception {
-                System.out.println("jsp: " + jsp);
-                System.out.println("html: " + html);
                 ModelAndView mv = new ModelAndView(jsp);
                 mv.getModel().put("requestUrl", html);
                 mv.getModel().put("buildTypeId", getBuildTypeIdParameter(httpServletRequest));
@@ -70,7 +68,7 @@ public class PhabricatorPlugin extends BuildFeature {
     @NotNull
     @Override
     public String describeParameters(@NotNull final Map<String, String> params) {
-        String url = "Not Set";
+        String url = "";
 
         for(String key : params.keySet()){
             if(key.equals("tcphab.phabricatorUrl")){

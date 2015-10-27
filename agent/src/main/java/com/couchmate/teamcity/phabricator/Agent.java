@@ -16,7 +16,7 @@ public class Agent extends AgentLifeCycleAdapter {
     private AppConfig appConfig = null;
 
 
-    public Agent(@NotNull EventDispatcher<Agent> eventDispatcher){
+    public Agent(@NotNull final EventDispatcher<AgentLifeCycleListener> eventDispatcher){
         eventDispatcher.addListener(this);
     }
 
