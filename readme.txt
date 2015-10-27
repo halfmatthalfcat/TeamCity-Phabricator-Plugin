@@ -1,4 +1,3 @@
-
  TeamCity plugin
 
  This is an empty project to develop TeamCity plugin.
@@ -10,4 +9,5 @@
  Issue 'mvn package' command from the root project to build your plugin. Resulting package <artifactId>.zip will be placed in 'target' directory. 
  
  3. Install
- To install the plugin, put zip archive to 'plugins' dir under TeamCity data directory. If you only changed agent-side code of your plugin, the upgrade will be perfomed 'on the fly' (agents will upgrade when idle). If common or server-side code has changed, restart the server.
+
+ To install the plugin, put zip archive to 'plugins' dir under TeamCity data directory and restart the server.
