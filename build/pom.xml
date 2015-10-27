@@ -2,7 +2,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
-    <artifactId>phabricator</artifactId>
+    <artifactId>teamcity-phabricator-plugin</artifactId>
     <groupId>com.couchmate.teamcity.phabricator</groupId>
     <version>1.0-SNAPSHOT</version>
   </parent>
@@ -10,14 +10,24 @@
   <packaging>pom</packaging>
   <properties>
       <maven.build.timestamp.format>yyyyMMddHHmmss</maven.build.timestamp.format>
-      <teamcity.phabricatorBuildFeature.plugin.version>snapshot-${maven.build.timestamp}</teamcity.phabricatorBuildFeature.plugin.version>
-      <teamcity.phabricatorBuildFeature.plugin.vendorName>Plugin vendor name</teamcity.phabricatorBuildFeature.plugin.vendorName>
-      <teamcity.phabricatorBuildFeature.plugin.vendorUrl>Plugin vendor URL</teamcity.phabricatorBuildFeature.plugin.vendorUrl>
+      <teamcity.teamcity-phabricator-plugin.plugin.version>snapshot-${maven.build.timestamp}</teamcity.teamcity-phabricator-plugin.plugin.version>
+      <teamcity.teamcity-phabricator-plugin.plugin.vendorName>Plugin vendor name</teamcity.teamcity-phabricator-plugin.plugin.vendorName>
+      <teamcity.teamcity-phabricator-plugin.plugin.vendorUrl>Plugin vendor URL</teamcity.teamcity-phabricator-plugin.plugin.vendorUrl>
   </properties>
   <dependencies>
       <dependency>
            <groupId>com.couchmate.teamcity.phabricator</groupId>
-           <artifactId>phabricator</artifactId>
+           <artifactId>agent</artifactId>
+           <version>1.0-SNAPSHOT</version>
+      </dependency>
+      <dependency>
+           <groupId>com.couchmate.teamcity.phabricator</groupId>
+           <artifactId>common</artifactId>
+           <version>1.0-SNAPSHOT</version>
+      </dependency>
+      <dependency>
+           <groupId>com.couchmate.teamcity.phabricator</groupId>
+           <artifactId>server</artifactId>
            <version>1.0-SNAPSHOT</version>
       </dependency>
   </dependencies>
@@ -41,15 +51,15 @@
                 <replacements>
                     <replacement>
                         <token>@Version@</token>
-                        <value>${teamcity.phabricatorBuildFeature.plugin.version}</value>
+                        <value>${teamcity.teamcity-phabricator-plugin.plugin.version}</value>
                     </replacement>
                     <replacement>
                         <token>@VendorName@</token>
-                        <value>${teamcity.phabricatorBuildFeature.plugin.vendorName}</value>
+                        <value>${teamcity.teamcity-phabricator-plugin.plugin.vendorName}</value>
                     </replacement>
                     <replacement>
                         <token>@VendorURL@</token>
-                        <value>${teamcity.phabricatorBuildFeature.plugin.vendorUrl}</value>
+                        <value>${teamcity.teamcity-phabricator-plugin.plugin.vendorUrl}</value>
                     </replacement>
                 </replacements>                        
             </configuration>
@@ -59,13 +69,27 @@
             <version>2.4</version>
             <executions>
               <execution>
+                <id>make-agent-assembly</id>
+                <phase>package</phase>
+                <goals>
+                  <goal>single</goal>
+                </goals>
+                <configuration>
+                  <finalName>agent</finalName>
+                  <appendAssemblyId>false</appendAssemblyId>
+                  <descriptors>
+                    <descriptor>plugin-agent-assembly.xml</descriptor>
+                  </descriptors>
+                </configuration>
+              </execution>
+              <execution>
                 <id>make-assembly</id>
                 <phase>package</phase>
                 <goals>
                   <goal>single</goal>
                 </goals>
                 <configuration>
-                  <finalName>PhabricatorBuildFeature</finalName>
+                  <finalName>teamcity-phabricator-plugin</finalName>
                   <outputDirectory>${project.parent.build.directory}</outputDirectory>
                   <appendAssemblyId>false</appendAssemblyId>
                   <descriptors>

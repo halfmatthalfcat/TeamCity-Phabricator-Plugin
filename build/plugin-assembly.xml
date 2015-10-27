@@ -10,12 +10,17 @@
          <source>target/teamcity-plugin.xml</source>
          <outputDirectory>/</outputDirectory>
      </file> 
+     <file>
+         <source>target/agent.zip</source>
+         <outputDirectory>agent</outputDirectory>
+     </file> 
   </files>
   <moduleSets>
     <moduleSet>
        <useAllReactorProjects>true</useAllReactorProjects>
        <includes>
-           <include>com.couchmate.teamcity.phabricatorBuildFeature:phabricatorBuildFeature-server</include>
+           <include>com.couchmate.teamcity.phabricator:server</include>
+           <include>com.couchmate.teamcity.phabricator:common</include>
        </includes> 
        <binaries>
            <outputDirectory>server</outputDirectory>
