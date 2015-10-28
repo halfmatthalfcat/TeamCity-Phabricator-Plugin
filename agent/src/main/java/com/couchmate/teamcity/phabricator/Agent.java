@@ -22,20 +22,22 @@ public class Agent extends AgentLifeCycleAdapter {
 
     @Override
     public void buildStarted(@NotNull AgentRunningBuild runningBuild) {
-        super.buildStarted(runningBuild);
+        //super.buildStarted(runningBuild);
         //Get logger
         this.logger = runningBuild.getBuildLogger();
+        logger.message("Phabricator Plugin: Build Started");
     }
 
     @Override
     public void beforeRunnerStart(@NotNull BuildRunnerContext runner) {
-        super.beforeRunnerStart(runner);
+        //super.beforeRunnerStart(runner);
         //If plugin enabled, run it
         Map<String, String> configs = new HashMap<>();
         configs.putAll(runner.getBuildParameters().getEnvironmentVariables());
         configs.putAll(runner.getConfigParameters());
 
         appConfig = new AppConfig(configs);
+        appConfig.parse();
 
         if(appConfig.isEnabled()){
             logger.message("Phabricator Plugin: Plugin is enabled, starting patch process");
