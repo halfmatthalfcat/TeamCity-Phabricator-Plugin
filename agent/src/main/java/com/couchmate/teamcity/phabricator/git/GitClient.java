@@ -20,26 +20,22 @@ public final class GitClient {
     }
 
     public CommandBuilder.Command reset(){
-        try {
-            return new CommandBuilder()
-                    .setWorkingDir(this.workingDir)
-                    .setCommand(this.GIT_COMMAND)
-                    .setAction("reset")
-                    .setFlag("--hard")
-                    .build();
-        } catch (TCPhabException e) { return null; }
+        return new CommandBuilder()
+                .setWorkingDir(this.workingDir)
+                .setCommand(this.GIT_COMMAND)
+                .setAction("reset")
+                .setFlag("--hard")
+                .build();
     }
 
     public CommandBuilder.Command clean(){
-        try {
-            return new CommandBuilder()
-                    .setWorkingDir(this.workingDir)
-                    .setCommand(this.GIT_COMMAND)
-                    .setAction("clean")
-                    .setArg("-fd")
-                    .setArg("-f")
-                    .build();
-        } catch (TCPhabException e) { return null; }
+        return new CommandBuilder()
+                .setWorkingDir(this.workingDir)
+                .setCommand(this.GIT_COMMAND)
+                .setAction("clean")
+                .setArg("-fd")
+                .setArg("-f")
+                .build();
     }
 
 }

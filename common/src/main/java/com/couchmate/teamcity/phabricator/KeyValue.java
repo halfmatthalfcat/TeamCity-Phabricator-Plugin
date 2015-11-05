@@ -1,14 +1,14 @@
 package com.couchmate.teamcity.phabricator;
 
-import static com.couchmate.teamcity.phabricator.CommonUtils.isNullOrEmpty;
+import java.util.IllegalFormatException;
 
 /**
- * Created by mjo20 on 10/10/2015.
+ * Created by matoliver15 on 10/30/15.
  */
-public class KeyValue {
+public class KeyValue<K, V> {
 
-    private final String key;
-    private final String value;
+    private final K key;
+    private final V value;
 
     private KeyValue(){
         this.key = null;
@@ -16,19 +16,25 @@ public class KeyValue {
     }
 
     public KeyValue(
-            final String key,
-            final String value
+            final K key,
+            final V value
     ){
         if(isNullOrEmpty(key)) throw new IllegalArgumentException("Must provide a valid key");
-        this.key = key;
+        else this.key = key;
         this.value = value;
     }
 
-    public String getKey(){
+    private static Boolean isNullOrEmpty(Object o){
+        if(o == null) return true;
+        else if (String.valueOf(o).equals("")) return true;
+        else return false;
+    }
+
+    public K getKey(){
         return this.key;
     }
 
-    public String getValue(){
+    public V getValue(){
         return this.value;
     }
 

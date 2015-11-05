@@ -29,7 +29,7 @@ public final class HarbormasterMessage extends MessageBase {
         this.messageType = null;
     }
 
-    private HarbormasterMessage(
+    public HarbormasterMessage(
             final String apiKey,
             final String buildPHID,
             final HarbormasterMessageType messageType,

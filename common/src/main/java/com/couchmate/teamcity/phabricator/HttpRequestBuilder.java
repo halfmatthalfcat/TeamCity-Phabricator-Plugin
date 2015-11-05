@@ -1,10 +1,13 @@
 package com.couchmate.teamcity.phabricator;
 
 import com.couchmate.teamcity.phabricator.TCPhabException;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.message.BasicHeader;
+import org.apache.http.message.BasicNameValuePair;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
@@ -23,8 +26,9 @@ public final class HttpRequestBuilder {
     private Integer port = null;
     private String path = null;
     private String scheme = null;
-    private List<KeyValue> params = new ArrayList<KeyValue>();
+    private List<StringKeyValue> params = new ArrayList<>();
     private StringEntity body = null;
+    private List<BasicNameValuePair> formParams = new ArrayList<>();
 
     public HttpRequestBuilder get(){
         this.httpRequest = new HttpGet();
@@ -38,7 +42,7 @@ public final class HttpRequestBuilder {
 
     public HttpRequestBuilder setScheme(String scheme){
         if(CommonUtils.isNullOrEmpty(scheme)) throw new IllegalArgumentException("Must provide a valid scheme");
-        else if (!scheme.equals("http") || !scheme.equals("https")) throw new IllegalArgumentException(String.format("Scheme %s is not supported", scheme));
+        else if (!scheme.equals("http") && !scheme.equals("https")) throw new IllegalArgumentException(String.format("Scheme %s is not supported", scheme));
         else this.scheme = scheme;
         return this;
     }
@@ -62,12 +66,12 @@ public final class HttpRequestBuilder {
 
     public HttpRequestBuilder setParam(String key, String value){
         if(CommonUtils.isNullOrEmpty(key)) throw new IllegalArgumentException("Must provide a valid param");
-        else this.params.add(new KeyValue(key, value));
+        else this.params.add(new StringKeyValue(key, value));
         return this;
     }
 
-    public HttpRequestBuilder setParams(List<KeyValue> params){
-        for(KeyValue param : params){
+    public HttpRequestBuilder setParams(List<StringKeyValue> params){
+        for(StringKeyValue param : params){
             this.params.add(param);
         }
         return this;
@@ -75,7 +79,14 @@ public final class HttpRequestBuilder {
 
     public HttpRequestBuilder setBody(String body) throws UnsupportedEncodingException {
         if(CommonUtils.isNullOrEmpty(body)) throw new IllegalArgumentException("Must provide a valid body");
-        else this.body = new StringEntity(body);
+        else{
+            this.body = new StringEntity(body);
+        }
+        return this;
+    }
+
+    public HttpRequestBuilder addFormParam(StringKeyValue keyValue){
+        this.formParams.add(new BasicNameValuePair(keyValue.getKey(), keyValue.getValue()));
         return this;
     }
 
@@ -99,7 +110,12 @@ public final class HttpRequestBuilder {
         if(httpRequest instanceof HttpGet) httpRequest.setURI(this.uri);
         if(httpRequest instanceof HttpPost) {
             httpRequest.setURI(this.uri);
-            if(this.body != null) ((HttpPost) httpRequest).setEntity(this.body);
+            if(!this.formParams.isEmpty()){
+                try {
+                    ((HttpPost) httpRequest).setEntity(new UrlEncodedFormEntity(this.formParams));
+                } catch (Exception e) { e.printStackTrace(); }
+            }
+            else if(this.body != null) ((HttpPost) httpRequest).setEntity(this.body);
         }
 
         return httpRequest;

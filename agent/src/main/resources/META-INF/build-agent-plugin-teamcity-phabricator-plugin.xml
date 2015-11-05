@@ -5,6 +5,7 @@
                            http://www.springframework.org/schema/beans/spring-beans-2.5.xsd"
        default-autowire="constructor">
 
-       <bean class="com.couchmate.teamcity.phabricator.Agent" />
-
+    <bean id="phabricatorAgent" class="com.couchmate.teamcity.phabricator.Agent" />
+    <bean id="phabricatorLogger" class="com.couchmate.teamcity.phabricator.PhabLogger" />
+    <bean id="phabricatorConfig" class="com.couchmate.teamcity.phabricator.AppConfig" />
 </beans>

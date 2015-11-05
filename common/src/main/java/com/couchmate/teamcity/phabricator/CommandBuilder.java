@@ -1,167 +1,162 @@
 package com.couchmate.teamcity.phabricator;
 
-import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Created by mjo20 on 10/10/2015.
+ * Created by matoliver15 on 10/30/15.
  */
 public final class CommandBuilder {
 
-    private final Runtime runtime = Runtime.getRuntime();
-    private String path = null;
     private String command = null;
     private String action = null;
     private String workingDir = null;
     private List<String> args = new ArrayList<String>();
 
+    private static Boolean isNullOrEmpty(Object o){
+        if(o == null) return true;
+        else if(String.valueOf(o).equals("")) return true;
+        else return false;
+    }
+
+    private static String formatFlag(String flag){
+        Pattern withFlag = Pattern.compile("^\\-\\-[a-zA-Z0-9-]+$");
+        Pattern singleWord = Pattern.compile("^\\w$");
+        Matcher m = withFlag.matcher(flag.trim());
+        Matcher m1 = singleWord.matcher(flag.trim());
+        if(m.matches()) return flag.trim();
+        else if(m1.matches()) return String.format("--%s", flag);
+        else throw new IllegalArgumentException(String.format("%s is not a valid flag", flag));
+    }
+
     public CommandBuilder setWorkingDir(String workingDir){
-        if(CommonUtils.isNullOrEmpty(workingDir)) throw new IllegalArgumentException("Must provide a valid working directory");
+        if(isNullOrEmpty(workingDir)) throw new IllegalArgumentException("Need to provide valid working directory");
         else this.workingDir = workingDir;
         return this;
     }
 
     public CommandBuilder setCommand(String cmd){
-        if(CommonUtils.isNullOrEmpty(cmd)) throw new IllegalArgumentException("Must provide a command");
+        if(isNullOrEmpty(cmd)) throw new IllegalArgumentException("Need to provide a valid command");
         else this.command = cmd;
         return this;
     }
 
     public CommandBuilder setAction(String action){
-        if(CommonUtils.isNullOrEmpty(action)) throw new IllegalArgumentException("Must provide a valid action");
+        if(isNullOrEmpty(action)) throw new IllegalArgumentException("Need to provide a valid action");
         else this.action = action;
         return this;
     }
 
     public CommandBuilder setArg(String arg){
-        if(CommonUtils.isNullOrEmpty(arg)) throw new IllegalArgumentException("Must provide a valid argument");
+        if(isNullOrEmpty(arg)) throw new IllegalArgumentException("Need to provide a valid argument");
         else this.args.add(arg);
         return this;
     }
 
     public CommandBuilder setArg(int pos, String arg){
-        if(CommonUtils.isNullOrEmpty(arg)) throw new IllegalArgumentException("Must provide a valid argument");
+        if(isNullOrEmpty(arg)) throw new IllegalArgumentException("Need to provide a valid argument");
         else this.args.add(pos, arg);
         return this;
     }
 
-    public CommandBuilder setArgs(String... args){
-        for(String arg : args){
-            this.args.add(arg);
-        }
-        return this;
-    }
-
     public CommandBuilder setFlag(String flag){
-        if(CommonUtils.isNullOrEmpty(flag)) throw new IllegalArgumentException("Must provide a valid flag");
+        if(isNullOrEmpty(flag)) throw new IllegalArgumentException("Must provide a valid flag");
         else this.args.add(formatFlag(flag));
         return this;
     }
 
     public CommandBuilder setFlag(int pos, String flag){
-        if(CommonUtils.isNullOrEmpty(flag)) throw new IllegalArgumentException("Must provide a valid flag");
+        if(isNullOrEmpty(flag)) throw new IllegalArgumentException("Must provide a valid flag");
         else this.args.add(pos, formatFlag(flag));
         return this;
     }
 
-    public CommandBuilder setArgWithValue(KeyValue argWithValue){
-        this.args.add(String.format("%s %s", argWithValue.getKey(), argWithValue.getValue()));
+    public CommandBuilder setArgWithValue(StringKeyValue keyValue){
+        this.args.add(String.format("%s %s", keyValue.getKey(), keyValue.getValue()));
         return this;
     }
 
-    public CommandBuilder setArgWithValue(int pos, KeyValue argWithValue){
-        this.args.add(pos, String.format("%s %s", argWithValue.getKey(), argWithValue.getValue()));
+    public CommandBuilder setArgWithValue(int pos, StringKeyValue keyValue){
+        this.args.add(pos, String.format("%s %s", keyValue.getKey(), keyValue.getValue()));
         return this;
     }
 
-    public CommandBuilder setFlagWithValue(KeyValue flagWithValue){
-        this.args.add(String.format("%s %s", formatFlag(flagWithValue.getKey()), flagWithValue.getValue()));
+    public CommandBuilder setFlagWithValue(StringKeyValue keyValue){
+        this.args.add(String.format("%s %s", formatFlag(keyValue.getKey()), keyValue.getValue()));
         return this;
     }
 
-    public CommandBuilder setFlagWithValue(int pos, KeyValue flagWithValue){
-        this.args.add(pos, String.format("%s %s", formatFlag(flagWithValue.getKey()), flagWithValue.getValue()));
+    public CommandBuilder setFlagWithValue(int pos, StringKeyValue keyValue){
+        this.args.add(pos, String.format("%s %s", formatFlag(keyValue.getKey()), keyValue.getValue()));
         return this;
     }
 
-    public CommandBuilder setArgWithValueEquals(KeyValue argWithValueEquals){
-        this.args.add(String.format("%s=%s", argWithValueEquals.getKey(), argWithValueEquals.getValue()));
+    public CommandBuilder setArgWithValueEquals(StringKeyValue keyValue){
+        this.args.add(String.format("%s=%s", keyValue.getKey(), keyValue.getValue()));
         return this;
     }
 
-    public CommandBuilder setArgWithValueEquals(int pos, KeyValue argWithValueEquals){
-        this.args.add(pos, String.format("%s=%s", argWithValueEquals.getKey(), argWithValueEquals.getValue()));
+    public CommandBuilder setArgWithValueEquals(int pos, StringKeyValue keyValue){
+        this.args.add(pos, String.format("%s=%s", keyValue.getKey(), keyValue.getValue()));
         return this;
     }
 
-    public CommandBuilder setFlagWithValueEquals(KeyValue flagWithValueEquals){
-        this.args.add(String.format("%s=%s", formatFlag(flagWithValueEquals.getKey()), flagWithValueEquals.getValue()));
+    public CommandBuilder setFlagWithValueEquals(int pos, StringKeyValue keyValue){
+        this.args.add(pos, String.format("%s=%s", formatFlag(keyValue.getKey()), keyValue.getValue()));
         return this;
     }
 
-    public CommandBuilder setFlagWithValueEquals(int pos, KeyValue flagWithValueEquals){
-        this.args.add(pos, String.format("%s=%s", formatFlag(flagWithValueEquals.getKey()), flagWithValueEquals.getValue()));
+    public CommandBuilder setFlagWithValueEquals(StringKeyValue keyValue){
+        this.args.add(String.format("%s=%s", formatFlag(keyValue.getKey()), keyValue.getValue()));
         return this;
     }
 
-    public Command build() throws TCPhabException {
-        if(CommonUtils.isNullOrEmpty(this.command)) throw new TCPhabException("Must provide a valid command");
-        else this.args.add(0, command);
-        if(!CommonUtils.isNullOrEmpty(this.action)) this.args.add(1, action);
+    public Command build(){
+        if(isNullOrEmpty(this.command)) throw new IllegalArgumentException("Must provide a command");
+        else this.args.add(0, this.command);
+        if(!isNullOrEmpty(this.action)) this.args.add(1, this.action);
 
         return new Command(
-                this.runtime,
-                (String[])this.args.toArray(),
+                args.toArray(new String[args.size()]),
                 this.workingDir
         );
     }
 
-    private static String formatFlag(String flag){
-        Pattern withFlag = Pattern.compile("^\\-\\-\\w+$");
-        Pattern singleWord = Pattern.compile("^\\w$");
-        Matcher m = withFlag.matcher(flag.trim());
-        Matcher m1 = singleWord.matcher(flag.trim());
-        if(m.matches()) return flag.trim();
-        else if(m1.matches()) return String.format("--%s", flag.trim());
-        else throw new IllegalArgumentException(String.format("%s is not a valid flag", flag));
-    }
-
     public class Command {
-        private final Runtime runtime;
-        private final String[] args;
+
         private final File workingDir;
+        private ProcessBuilder processBuilder;
         private Process process;
 
         private Command(){
-            this.runtime = null;
-            this.args = null;
             this.workingDir = null;
         }
 
         public Command(
-                final Runtime runtime,
                 final String[] args,
                 final String workingDir
         ){
-            this.runtime = runtime;
-            this.args = args;
-            this.workingDir = CommonUtils.isNullOrEmpty(workingDir) ? null : new File(workingDir);
+            this.workingDir = isNullOrEmpty(workingDir) ? null : new File(workingDir);
+
+            this.processBuilder = new ProcessBuilder(args);
+            this.processBuilder.directory(this.workingDir);
+            this.processBuilder.inheritIO();
         }
 
-        public int exec(){
-            try { this.process = this.runtime.exec(args, null, workingDir); return this.process.waitFor(); }
-            catch (IOException | InterruptedException e) { return 666; }
+        public Command exec(){
+            try{ process = this.processBuilder.start(); }
+            catch (Exception e) { e.printStackTrace(); }
+            return this;
         }
 
-        public BufferedOutputStream getOutputStream(){
-            if(!this.process.isAlive()) return null;
-            else return new BufferedOutputStream(this.process.getOutputStream());
+        public int join(){
+            try{ return this.process.waitFor(); }
+            catch (Exception e) { e.printStackTrace(); return 666; }
         }
+
     }
 
 }

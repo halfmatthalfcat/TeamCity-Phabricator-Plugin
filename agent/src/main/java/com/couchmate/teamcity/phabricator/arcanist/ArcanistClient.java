@@ -2,6 +2,7 @@ package com.couchmate.teamcity.phabricator.arcanist;
 
 import com.couchmate.teamcity.phabricator.CommandBuilder;
 import com.couchmate.teamcity.phabricator.KeyValue;
+import com.couchmate.teamcity.phabricator.StringKeyValue;
 import com.couchmate.teamcity.phabricator.TCPhabException;
 
 
@@ -39,24 +40,34 @@ public final class ArcanistClient {
     ){
         try {
             return new CommandBuilder()
-                    .setCommand(this.ARC_COMMAND)
+                    .setCommand("/opt/arcanist/bin/arc")
                     .setAction("patch")
                     .setWorkingDir(this.workingDir)
                     .setFlag("--nobranch")
                     .setFlag("--nocommit")
-                    .setFlagWithValue(new KeyValue("--diff", formatDiffId(diffId)))
-                    .setFlagWithValue(new KeyValue("--conduit-token", this.conduitToken))
+                    .setArg("--diff")
+                    .setArg(formatDiffId(diffId))
+                    .setFlagWithValueEquals(new StringKeyValue("--conduit-token", this.conduitToken))
                     .build();
-        } catch (TCPhabException e) { return null; }
+        } catch (TCPhabException e) { e.printStackTrace(); return null; }
+    }
+
+    public CommandBuilder.Command which(
+            final String prog
+    ){
+        return new CommandBuilder()
+                .setCommand("which")
+                .setAction(prog)
+                .build();
     }
 
     private static String formatDiffId(String diffId) throws TCPhabException {
-        Pattern diffIdWithD = Pattern.compile("^D[0-9]+$");
+        Pattern diffIdWithD = Pattern.compile("^D([0-9]+)$");
         Pattern diffIdWoD = Pattern.compile("^[0-9]+$");
         Matcher m = diffIdWithD.matcher(diffId);
         Matcher m1 = diffIdWoD.matcher(diffId);
-        if(m.matches()) return diffId;
-        else if(m1.matches()) return String.format("D%s", diffId);
+        if(m.matches()) return diffIdWithD.split(diffId)[0];
+        else if(m1.matches()) return diffId;
         else throw new TCPhabException(String.format("Invalid Differential DiffId %s", diffId));
     }
 

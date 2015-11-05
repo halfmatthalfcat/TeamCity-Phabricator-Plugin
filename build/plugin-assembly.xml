@@ -11,7 +11,7 @@
          <outputDirectory>/</outputDirectory>
      </file> 
      <file>
-         <source>target/agent.zip</source>
+         <source>target/phabricator-agent.zip</source>
          <outputDirectory>agent</outputDirectory>
      </file> 
   </files>
