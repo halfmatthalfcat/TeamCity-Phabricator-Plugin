@@ -6,6 +6,7 @@ import com.couchmate.teamcity.phabricator.PhabLogger;
 import com.couchmate.teamcity.phabricator.arcanist.ArcanistClient;
 import com.couchmate.teamcity.phabricator.conduit.ConduitClient;
 import com.couchmate.teamcity.phabricator.git.GitClient;
+import jetbrains.buildServer.agent.BuildRunnerContext;
 
 /**
  * Created by mjo20 on 10/15/2015.
@@ -17,10 +18,12 @@ public class ApplyPatch extends Task {
     private GitClient gitClient = null;
     private ArcanistClient arcanistClient = null;
     private ConduitClient conduitClient = null;
+    private BuildRunnerContext runner;
 
-    public ApplyPatch(AppConfig appConfig, PhabLogger logger){
+    public ApplyPatch(BuildRunnerContext runner, AppConfig appConfig, PhabLogger logger){
         this.appConfig = appConfig;
         this.logger = logger;
+        this.runner = runner;
     }
 
     @Override
@@ -45,6 +48,10 @@ public class ApplyPatch extends Task {
             CommandBuilder.Command patch = arcanistClient.patch(this.appConfig.getDiffId());
             int patchCode = patch.exec().join();
             logger.info(String.format("Patch exited with code: %d", patchCode));
+
+            if(patchCode > 0){
+                this.runner.getBuild().stopBuild("Patch failed to apply. Check build log.");
+            }
 
         } catch (NullPointerException e) { logger.warn("AppPatchError", e); }
     }

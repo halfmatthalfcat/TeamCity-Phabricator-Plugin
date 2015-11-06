@@ -56,7 +56,7 @@ public class Agent extends AgentLifeCycleAdapter {
                 this.logger.info("Plugin is enabled, starting patch process");
                 this.appConfig.setWorkingDir(runner.getWorkingDirectory().getPath());
 
-                new ApplyPatch(this.appConfig, this.logger).run();
+                new ApplyPatch(runner, this.appConfig, this.logger).run();
 
             } else {
                 this.logger.info("Plugin is disabled.");
