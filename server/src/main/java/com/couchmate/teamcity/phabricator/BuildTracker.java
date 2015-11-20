@@ -75,7 +75,7 @@ public class BuildTracker implements Runnable {
                 .setScheme("http")
                 .setPath("/api/harbormaster.sendmessage")
                         //.setBody(payload.toString())
-                .addFormParam(new StringKeyValue("api.token", this.appConfig.getConduitApiKey()))
+                .addFormParam(new StringKeyValue("api.token", this.appConfig.getConduitToken()))
                 .addFormParam(new StringKeyValue("buildTargetPHID", this.appConfig.getHarbormasterTargetPHID()))
                 .addFormParam(new StringKeyValue("type", "work"))
                 .addFormParam(new StringKeyValue("unit[0][name]", test.getTest().getName().getTestMethodName()))

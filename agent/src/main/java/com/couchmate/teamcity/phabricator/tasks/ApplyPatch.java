@@ -30,7 +30,8 @@ public class ApplyPatch extends Task {
     protected void setup() {
         logger.info(String.format("Phabricator Plugin: Applying Differential Patch %s", appConfig.getDiffId()));
         this.gitClient = new GitClient(this.appConfig.getWorkingDir());
-        this.arcanistClient = new ArcanistClient(this.appConfig.getConduitToken(), this.appConfig.getWorkingDir());
+        this.arcanistClient = new ArcanistClient(
+                this.appConfig.getConduitToken(), this.appConfig.getWorkingDir(), this.appConfig.getArcPath());
         this.conduitClient = new ConduitClient(this.appConfig.getPhabricatorUrl(), this.appConfig.getConduitToken());
     }
 
@@ -49,9 +50,9 @@ public class ApplyPatch extends Task {
             int patchCode = patch.exec().join();
             logger.info(String.format("Patch exited with code: %d", patchCode));
 
-            if(patchCode > 0){
+            /*if(patchCode > 0){
                 this.runner.getBuild().stopBuild("Patch failed to apply. Check build log.");
-            }
+            }*/
 
         } catch (NullPointerException e) { logger.warn("AppPatchError", e); }
     }

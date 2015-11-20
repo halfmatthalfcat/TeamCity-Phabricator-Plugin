@@ -16,19 +16,22 @@ public final class ArcanistClient {
 
     private final String conduitToken;
     private final String workingDir;
-    private final String ARC_COMMAND = "arc";
+    private final String arcPath;
 
     private ArcanistClient(){
         this.conduitToken = null;
         this.workingDir = null;
+        this.arcPath = null;
     }
 
     public ArcanistClient(
             final String conduitToken,
-            final String workingDir
+            final String workingDir,
+            final String arcPath
     ){
         this.conduitToken = conduitToken;
         this.workingDir = workingDir;
+        this.arcPath = arcPath;
     }
 
     /**
@@ -40,7 +43,7 @@ public final class ArcanistClient {
     ){
         try {
             return new CommandBuilder()
-                    .setCommand("/opt/arcanist/bin/arc")
+                    .setCommand(arcPath)
                     .setAction("patch")
                     .setWorkingDir(this.workingDir)
                     .setFlag("--nobranch")

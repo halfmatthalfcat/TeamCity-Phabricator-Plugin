@@ -22,7 +22,7 @@ public class PhabricatorPlugin extends BuildFeature {
             @NotNull final PluginDescriptor pluginDescriptor,
             @NotNull final WebControllerManager webControllerManager
     ){
-        final String jsp = pluginDescriptor.getPluginResourcesPath("/tcPhabSettings.jsp");
+        final String jsp = pluginDescriptor.getPluginResourcesPath("tcPhabSettings.jsp");
         final String html = pluginDescriptor.getPluginResourcesPath("tcPhabSettings.html");
 
         webControllerManager.registerController(html, new BaseController() {

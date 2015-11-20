@@ -2,16 +2,9 @@
 <teamcity-plugin xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:schemas-jetbrains-com:teamcity-plugin-v1-xml">
   <info>
     <name>teamcity-phabricator-plugin</name>
-    <display-name>Phabricator-TeamCity-Integration</display-name>
-    <version>1.0.4</version>
+    <display-name>Phabricator TeamCity Integration</display-name>
+    <version>1.0.0</version>
     <description>Integrate Phabricator's Harbormaster with TeamCity</description>
-    <download-url>www.google.com</download-url>
-    <email>mjo2089@gmail.com</email>
-    <vendor>
-      <name>Couchmate</name>
-      <url>couchmate.io</url>
-      <logo>couchmate.io</logo>
-    </vendor>
   </info>
   <deployment use-separate-classloader="true" />
 </teamcity-plugin>

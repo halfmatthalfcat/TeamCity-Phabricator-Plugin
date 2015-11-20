@@ -40,7 +40,7 @@ public class HarbormasterBuildStatus extends Task {
                     .setScheme("http")
                     .setHost(this.appConfig.getPhabricatorUrl())
                     .setPath("/api/harbormaster.sendmessage")
-                    .addFormParam(new StringKeyValue("api.token", this.appConfig.getConduitApiKey()))
+                    .addFormParam(new StringKeyValue("api.token", this.appConfig.getConduitToken()))
                     .addFormParam(new StringKeyValue("type", parseTeamCityBuildStatus(this.buildFinishedStatus)))
                     .addFormParam(new StringKeyValue("buildTargetPHID", this.appConfig.getHarbormasterTargetPHID()))
                     .build();
@@ -60,11 +60,12 @@ public class HarbormasterBuildStatus extends Task {
     }
 
     private String parseTeamCityBuildStatus(BuildFinishedStatus buildFinishedStatus){
-        switch (buildFinishedStatus.toString()){
-            case "FINISHED_SUCCESS":
+        switch (buildFinishedStatus){
+            case FINISHED_SUCCESS:
                 return "pass";
-            case "FINISHED_FAILED":
-            case "FINISHED_WITH_PROBLEMS":
+            case FINISHED_FAILED:
+            case FINISHED_WITH_PROBLEMS:
+            case INTERRUPTED:
                 return "fail";
             default:
                 return null;

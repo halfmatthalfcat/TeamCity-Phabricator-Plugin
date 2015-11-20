@@ -17,11 +17,10 @@ public final class AppConfig {
 
     private String phabricatorUrl;
     private String conduitToken;
-    private String conduitApiKey;
+    private String arcPath;
     private String diffId;
     private String harbormasterTargetPHID;
     private String workingDir;
-    private String revisionId;
     private Boolean enabled = false;
 
     public AppConfig(){
@@ -31,16 +30,16 @@ public final class AppConfig {
     //CONFIG VARS
     private final String PHAB_URL = "tcphab.phabricatorUrl";
     private final String CONDUIT_TOKEN = "tcphab.conduitToken";
-    private final String CONDUIT_API = "tcphab.conduitApiKey";
+    private final String ARC_PATH = "tcphab.pathToArc";
     private final String DIFF_ID = "diffId";
     private final String ENV_DIFF_ID = "env.diffId";
     private final String HARBORMASTER_PHID = "harbormasterTargetPHID";
     private final String ENV_HARBORMASTER_PHID = "env.harbormasterTargetPHID";
+    //TODO used for commenting on diffs eventually
     private final String REVISION_ID = "revisionId";
     private final String ENV_REVISION_ID = "env.revisionId";
 
     public void parse(){
-        logger.info(String.format("Parsing %s parameters", this.params.size()));
         for(String value : this.params.keySet()){
             if(!isNullOrEmpty(value)){
                 switch(value){
@@ -52,10 +51,9 @@ public final class AppConfig {
                         logger.info(String.format("Found conduitToken: %s", params.get(CONDUIT_TOKEN)));
                         this.conduitToken = params.get(CONDUIT_TOKEN);
                         break;
-                    case CONDUIT_API:
-                        logger.info(String.format("Found conduitApiKey: %s", params.get(CONDUIT_API)));
-                        this.conduitApiKey = params.get(CONDUIT_API);
-                        break;
+                    case ARC_PATH:
+                        logger.info(String.format("Found arcPath: %s", params.get(ARC_PATH)));
+                        this.arcPath = params.get(ARC_PATH);
                     case ENV_DIFF_ID:
                         logger.info(String.format("Found diffId: %s", params.get(ENV_DIFF_ID)));
                         this.diffId = params.get(ENV_DIFF_ID);
@@ -72,21 +70,13 @@ public final class AppConfig {
                         logger.info(String.format("Found harbormasterTargetPHID: %s", params.get(HARBORMASTER_PHID)));
                         this.harbormasterTargetPHID = params.get(HARBORMASTER_PHID);
                         break;
-                    case ENV_REVISION_ID:
-                        logger.info(String.format("Found revisionId: %s", params.get(ENV_REVISION_ID)));
-                        this.revisionId = params.get(ENV_REVISION_ID);
-                        break;
-                    case REVISION_ID:
-                        logger.info(String.format("Found revisionId: %s", params.get(REVISION_ID)));
-                        this.revisionId = params.get(REVISION_ID);
-                        break;
                 }
             }
         }
         if(
                 !isNullOrEmpty(conduitToken) &&
+                !isNullOrEmpty(arcPath) &&
                 !isNullOrEmpty(phabricatorUrl) &&
-                !isNullOrEmpty(conduitApiKey) &&
                 !isNullOrEmpty(diffId) &&
                 !isNullOrEmpty(harbormasterTargetPHID)){
             this.enabled = true;
@@ -109,8 +99,6 @@ public final class AppConfig {
         this.workingDir = workingDir;
     }
 
-    public String getConduitApiKey() { return this.conduitApiKey; }
-
     public String getHarbormasterTargetPHID() {
         return this.harbormasterTargetPHID;
     }
@@ -127,7 +115,7 @@ public final class AppConfig {
         return this.diffId;
     }
 
-    public String getRevisionId() { return this.revisionId; }
+    public String getArcPath() { return this.arcPath; }
 
     public Boolean isEnabled() {
         return this.enabled;
