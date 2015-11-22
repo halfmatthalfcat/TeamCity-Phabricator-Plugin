@@ -2,9 +2,6 @@ package com.couchmate.teamcity.phabricator.conduit;
 
 import com.google.gson.annotations.SerializedName;
 
-/**
- * Created by mjo20 on 10/13/2015.
- */
 public final class Result {
 
     private String result;

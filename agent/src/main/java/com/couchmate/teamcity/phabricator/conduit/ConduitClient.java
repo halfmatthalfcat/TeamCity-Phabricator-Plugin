@@ -10,9 +10,6 @@ import org.apache.http.impl.client.*;
 import java.io.IOException;
 import java.net.URISyntaxException;
 
-/**
- * Created by mjo20 on 10/10/2015.
- */
 public final class ConduitClient {
 
     private final String conduitURL;

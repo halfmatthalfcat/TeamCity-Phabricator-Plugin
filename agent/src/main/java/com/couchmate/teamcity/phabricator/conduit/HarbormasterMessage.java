@@ -4,9 +4,6 @@ import com.google.gson.annotations.SerializedName;
 
 import java.util.List;
 
-/**
- * Created by mjo20 on 10/14/2015.
- */
 public final class HarbormasterMessage extends MessageBase {
 
     public enum HarbormasterMessageType {

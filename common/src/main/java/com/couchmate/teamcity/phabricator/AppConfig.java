@@ -6,9 +6,6 @@ import java.io.File;
 import java.util.Map;
 import static com.couchmate.teamcity.phabricator.CommonUtils.isNullOrEmpty;
 
-/**
- * Created by mjo20 on 10/15/2015.
- */
 public final class AppConfig {
 
     private Map<String, String> params;

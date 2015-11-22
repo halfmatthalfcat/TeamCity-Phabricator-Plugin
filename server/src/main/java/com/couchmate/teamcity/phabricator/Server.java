@@ -12,9 +12,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Created by mjo20 on 10/31/2015.
- */
 public class Server extends BuildServerAdapter {
 
     private Map<String, List<STestRun>> tests = new HashMap<>();

@@ -6,9 +6,6 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * Created by matoliver15 on 10/30/15.
- */
 public final class CommandBuilder {
 
     private String command = null;

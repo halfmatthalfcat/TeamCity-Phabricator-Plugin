@@ -9,9 +9,6 @@ import com.couchmate.teamcity.phabricator.TCPhabException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * Created by mjo20 on 10/10/2015.
- */
 public final class ArcanistClient {
 
     private final String conduitToken;

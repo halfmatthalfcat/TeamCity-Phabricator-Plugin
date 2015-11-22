@@ -19,9 +19,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Created by mjo20 on 11/2/2015.
- */
 public class BuildTracker implements Runnable {
 
     private SRunningBuild build;

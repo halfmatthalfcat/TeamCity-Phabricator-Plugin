@@ -3,9 +3,6 @@ package com.couchmate.teamcity.phabricator.git;
 import com.couchmate.teamcity.phabricator.CommandBuilder;
 import com.couchmate.teamcity.phabricator.TCPhabException;
 
-/**
- * Created by mjo20 on 10/12/2015.
- */
 public final class GitClient {
 
     private final String GIT_COMMAND = "git";

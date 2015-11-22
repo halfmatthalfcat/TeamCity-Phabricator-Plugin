@@ -15,9 +15,6 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by mjo20 on 10/10/2015.
- */
 public final class HttpRequestBuilder {
 
     private HttpRequestBase httpRequest = null;

@@ -2,9 +2,6 @@ package com.couchmate.teamcity.phabricator;
 
 import java.util.IllegalFormatException;
 
-/**
- * Created by matoliver15 on 10/30/15.
- */
 public class KeyValue<K, V> {
 
     private final K key;

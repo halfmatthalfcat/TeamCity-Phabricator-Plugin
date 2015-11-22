@@ -11,9 +11,6 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintStream;
 
-/**
- * Created by mjo20 on 10/27/2015.
- */
 public final class PhabLogger {
 
     @NonNls

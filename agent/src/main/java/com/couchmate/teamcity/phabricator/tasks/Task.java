@@ -1,8 +1,5 @@
 package com.couchmate.teamcity.phabricator.tasks;
 
-/**
- * Created by mjo20 on 10/11/2015.
- */
 public abstract class Task {
 
     public enum Result{

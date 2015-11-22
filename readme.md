@@ -4,6 +4,13 @@ Real-time build triggers and reporting with JetBrain's TeamCity and Phacility's 
 ##Installation
 The plugin consists of two pieces: the TeamCity Java plugin (Build Feature) which itself consists of two parts: a Server and Agent plugin, as well as the custom Phabricator Harbormaster Build Step.
 
+High Level Steps:
+
+1. Upload `teamcity-phabricator-plugin.zip` as an external plugin
+2. Move the PHP files from the Phabricator/ directory of the release into `src/extensions` on your Phabricator instance
+3. ???
+4. Profit
+
 ###TeamCity
 Installing the TeamCity plugin is extremely easy. In the latest release, unzip the release and in the TeamCity folder is `teamcity-phabricator-plugin.zip`. This zip is uploaded directly to your TeamCity instance. The plugin is automatically applied to all of your available Agents but requires a reboot to apply the Server side of the plugin.
 
@@ -16,12 +23,12 @@ After you install and bounce the Server, you'll now be able to apply a custom Bu
 
 ***Conduit Token***: The Conduit API Key for the user you want to be executing build actions. This probably should be a Phabricator Bot as a best practice.
 
-***Path To Anarcist***: This is the path to Anarcist on your build agents. Currently, the plugin relies on a hardcoded path the Anarcist. In the future, this will simply look for `arc`.
+***Path To Anarcist***: This is the path to Anarcist on your build agents. Currently, the plugin relies on a hardcoded path to Anarcist. In the future, this will simply look for `arc`.
 
 After you successfully fill out the preceding options, you need to make a change to your VCS Checkout Settings for the project you plan on using the plugin with.
 
 Change the `Checkout Options` to `Automatically On Agent`. This enables us to execute actions against
-our checked out code (clean, reset) and apply Differential patches without lock errors
+our checked out code (clean, reset) and apply Differential patches without lock errors.
 
 ![Checkout Change]
 (https://i.imgur.com/IFBbx0s.png)
