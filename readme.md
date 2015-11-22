@@ -62,5 +62,5 @@ The TeamCity plugin currently reports the following to Phabricator (Harbormaster
 3. Add Differential commenting
 
 ##Contributions
-I want to give a special shoutout to @sectioneight for the inspiration on how to scaffold out this plugin
-(He wrote a majority of [Uber's Jenkins->Phabricator plugin|https://github.com/uber/phabricator-jenkins-plugin]) and @joprice for moral support
+I want to give a special shoutout to [@sectioneight](https://github.com/sectioneight) for the inspiration on how to scaffold out this plugin
+(He wrote a majority of [Uber's Jenkins->Phabricator plugin](https://github.com/uber/phabricator-jenkins-plugin) and [@joprice](https://github.com/joprice) for moral support
