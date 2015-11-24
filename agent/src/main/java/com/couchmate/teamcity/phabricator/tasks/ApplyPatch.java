@@ -50,9 +50,9 @@ public class ApplyPatch extends Task {
             int patchCode = patch.exec().join();
             logger.info(String.format("Patch exited with code: %d", patchCode));
 
-            /*if(patchCode > 0){
-                this.runner.getBuild().stopBuild("Patch failed to apply. Check build log.");
-            }*/
+            if(patchCode > 0){
+                this.runner.getBuild().stopBuild("Patch failed to apply. Check the agent output log for patch failure detals.");
+            }
 
         } catch (NullPointerException e) { logger.warn("AppPatchError", e); }
     }
