@@ -38,24 +38,10 @@ public class HarbormasterBuildStatus extends Task {
 
     @Override
     protected void setup() {
-        URI uri;
-        String url = this.appConfig.getPhabricatorUrl();
-        String scheme = null;
-        String host = null;
-        try {
-            uri = new URI(url);
-            scheme = uri.getScheme();
-            host = uri.getHost();
-        } catch (URISyntaxException e) {
-            // Don't die here, just use default values of "http" and the url as the path
-            e.printStackTrace();
-        }
-
         try {
             this.httpPost = (HttpPost) new HttpRequestBuilder()
                     .post()
-                    .setScheme(scheme == null ? "http" : scheme)
-                    .setHost(host == null ? url : host)
+                    .setUrl(this.appConfig.getPhabricatorUrl())
                     .setPath("/api/harbormaster.sendmessage")
                     .addFormParam(new StringKeyValue("api.token", this.appConfig.getConduitToken()))
                     .addFormParam(new StringKeyValue("type", parseTeamCityBuildStatus(this.buildFinishedStatus)))

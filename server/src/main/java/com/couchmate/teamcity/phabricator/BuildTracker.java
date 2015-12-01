@@ -70,23 +70,9 @@ public class BuildTracker implements Runnable {
     }
 
     private void sendTestReport(String testName, STestRun test) {
-        URI uri;
-        String url = this.appConfig.getPhabricatorUrl();
-        String scheme = null;
-        String host = null;
-        try {
-            uri = new URI(url);
-            scheme = uri.getScheme();
-            host = uri.getHost();
-        } catch (URISyntaxException e) {
-            // Don't die here, just use default values of "http" and the url as the path
-            e.printStackTrace();
-        }
-
         HttpRequestBuilder httpPost = new HttpRequestBuilder()
                 .post()
-                .setScheme(scheme == null ? "http" : scheme)
-                .setHost(host == null ? url : host)
+                .setUrl(this.appConfig.getPhabricatorUrl())
                 .setPath("/api/harbormaster.sendmessage")
                         //.setBody(payload.toString())
                 .addFormParam(new StringKeyValue("api.token", this.appConfig.getConduitToken()))
