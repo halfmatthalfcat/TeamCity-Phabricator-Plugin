@@ -42,7 +42,7 @@ public final class HttpRequestBuilder {
     /**
      * Sets the scheme, host and port based on the url.
      *
-     * @param url Url of the form "http://example.com", "https://example.com" or "example.com" where "http is implied
+     * @param url Url of the form "http://example.com", "https://example.com" or "example.com" where "http" is implied
      */
     public HttpRequestBuilder setUrl(String url) {
         URI uri;
@@ -54,6 +54,7 @@ public final class HttpRequestBuilder {
             host = uri.getHost();
         } catch (URISyntaxException e) {
             // Don't die here, just use default values of "http" and the url as the path
+            e.printStackTrace();
         }
         scheme = scheme == null ? HTTP_SCHEME : scheme;
         host = host == null ? url : host;
