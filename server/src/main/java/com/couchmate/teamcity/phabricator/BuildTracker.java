@@ -93,7 +93,7 @@ public class BuildTracker implements Runnable {
                 .addFormParam(new StringKeyValue("buildTargetPHID", this.appConfig.getHarbormasterTargetPHID()))
                 .addFormParam(new StringKeyValue("type", "work"))
                 .addFormParam(new StringKeyValue("unit[0][name]", test.getTest().getName().getTestMethodName()))
-                        //.addFormParam(new StringKeyValue("unit[0][duration]", String.valueOf(test.getDuration())))
+                //.addFormParam(new StringKeyValue("unit[0][duration]", String.valueOf(test.getDuration())))
                 .addFormParam(new StringKeyValue("unit[0][namespace]", test.getTest().getName().getClassName()));
 
         if (test.getStatus().isSuccessful()) {
