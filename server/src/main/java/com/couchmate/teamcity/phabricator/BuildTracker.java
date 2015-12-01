@@ -14,6 +14,8 @@ import org.apache.http.impl.client.HttpClients;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -25,33 +27,35 @@ public class BuildTracker implements Runnable {
     private AppConfig appConfig;
     private Map<String, STest> tests;
 
-    public BuildTracker(SRunningBuild build){
+    public BuildTracker(SRunningBuild build) {
         this.build = build;
         this.appConfig = new AppConfig();
         this.tests = new HashMap<>();
         Loggers.SERVER.info("Tracking build" + build.getBuildNumber());
     }
 
-    public void run(){
-        while (!build.isFinished()){
-            if(!appConfig.isEnabled()){
-                try{
+    public void run() {
+        while (!build.isFinished()) {
+            if (!appConfig.isEnabled()) {
+                try {
                     Map<String, String> params = new HashMap<>();
                     params.putAll(this.build.getBuildOwnParameters());
-                    if(!this.build.getBuildFeaturesOfType("phabricator").isEmpty())
+                    if (!this.build.getBuildFeaturesOfType("phabricator").isEmpty())
                         params.putAll(this.build.getBuildFeaturesOfType("phabricator").iterator().next().getParameters());
-                    for(String param : params.keySet())
-                        if(param != null) Loggers.AGENT.info(String.format("Found %s", param));
+                    for (String param : params.keySet())
+                        if (param != null) Loggers.AGENT.info(String.format("Found %s", param));
                     this.appConfig.setParams(params);
                     this.appConfig.parse();
-                } catch (Exception e) { Loggers.SERVER.error("BuildTracker Param Parse", e); }
+                } catch (Exception e) {
+                    Loggers.SERVER.error("BuildTracker Param Parse", e);
+                }
             } else {
                 build
                         .getBuildStatistics(BuildStatisticsOptions.ALL_TESTS_NO_DETAILS)
                         .getAllTests()
                         .forEach(
                                 testRun -> {
-                                    if(!this.tests.containsKey(testRun.getTest().getName().getAsString())) {
+                                    if (!this.tests.containsKey(testRun.getTest().getName().getAsString())) {
                                         this.tests.put(testRun.getTest().getName().getAsString(),
                                                 testRun.getTest());
                                         sendTestReport(testRun.getTest().getName().getAsString(),
@@ -65,33 +69,48 @@ public class BuildTracker implements Runnable {
         Loggers.SERVER.info(this.build.getBuildNumber() + " finished");
     }
 
-    private void sendTestReport(String testName, STestRun test){
+    private void sendTestReport(String testName, STestRun test) {
+        URI uri = null;
+        String scheme = "http";
+        String url = this.appConfig.getPhabricatorUrl();
+        String host = null;
+        try {
+            uri = new URI(url);
+            scheme = uri.getScheme();
+            host = uri.getHost();
+        } catch (URISyntaxException e) {
+            // Don't die here, just use default values of "http" and the url as the path
+            e.printStackTrace();
+        }
+
         HttpRequestBuilder httpPost = new HttpRequestBuilder()
                 .post()
-                .setHost(this.appConfig.getPhabricatorUrl())
-                .setScheme("http")
+                .setScheme(scheme)
+                .setHost(host == null ? url : host)
                 .setPath("/api/harbormaster.sendmessage")
                         //.setBody(payload.toString())
                 .addFormParam(new StringKeyValue("api.token", this.appConfig.getConduitToken()))
                 .addFormParam(new StringKeyValue("buildTargetPHID", this.appConfig.getHarbormasterTargetPHID()))
                 .addFormParam(new StringKeyValue("type", "work"))
                 .addFormParam(new StringKeyValue("unit[0][name]", test.getTest().getName().getTestMethodName()))
-                //.addFormParam(new StringKeyValue("unit[0][duration]", String.valueOf(test.getDuration())))
+                        //.addFormParam(new StringKeyValue("unit[0][duration]", String.valueOf(test.getDuration())))
                 .addFormParam(new StringKeyValue("unit[0][namespace]", test.getTest().getName().getClassName()));
 
-        if(test.getStatus().isSuccessful()){
+        if (test.getStatus().isSuccessful()) {
             httpPost.addFormParam(new StringKeyValue("unit[0][result]", "pass"));
-        } else if (test.getStatus().isFailed()){
+        } else if (test.getStatus().isFailed()) {
             httpPost.addFormParam(new StringKeyValue("unit[0][result]", "fail"));
         }
 
-        try (CloseableHttpClient httpClient = HttpClients.createDefault()){
-            try(CloseableHttpResponse response = httpClient.execute(httpPost.build())){
+        try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
+            try (CloseableHttpResponse response = httpClient.execute(httpPost.build())) {
                 Loggers.SERVER.info(String.format("Test Response: %s\nTest Body: %s\n",
                         response.getStatusLine().getStatusCode(),
                         IOUtils.toString(response.getEntity().getContent())));
             }
-        } catch (Exception e) { Loggers.SERVER.warn("Send error", e); }
+        } catch (Exception e) {
+            Loggers.SERVER.warn("Send error", e);
+        }
     }
 
 }
