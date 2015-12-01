@@ -71,8 +71,8 @@ public class BuildTracker implements Runnable {
 
     private void sendTestReport(String testName, STestRun test) {
         URI uri;
-        String scheme = null;
         String url = this.appConfig.getPhabricatorUrl();
+        String scheme = null;
         String host = null;
         try {
             uri = new URI(url);

@@ -39,8 +39,8 @@ public class HarbormasterBuildStatus extends Task {
     @Override
     protected void setup() {
         URI uri;
-        String scheme = null;
         String url = this.appConfig.getPhabricatorUrl();
+        String scheme = null;
         String host = null;
         try {
             uri = new URI(url);
