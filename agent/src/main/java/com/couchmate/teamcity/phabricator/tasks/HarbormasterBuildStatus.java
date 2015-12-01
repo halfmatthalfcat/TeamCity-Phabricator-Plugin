@@ -39,7 +39,7 @@ public class HarbormasterBuildStatus extends Task {
     @Override
     protected void setup() {
         URI uri;
-        String scheme = "http";
+        String scheme = null;
         String url = this.appConfig.getPhabricatorUrl();
         String host = null;
         try {
@@ -54,7 +54,7 @@ public class HarbormasterBuildStatus extends Task {
         try {
             this.httpPost = (HttpPost) new HttpRequestBuilder()
                     .post()
-                    .setScheme(scheme)
+                    .setScheme(scheme == null ? "http" : scheme)
                     .setHost(host == null ? url : host)
                     .setPath("/api/harbormaster.sendmessage")
                     .addFormParam(new StringKeyValue("api.token", this.appConfig.getConduitToken()))

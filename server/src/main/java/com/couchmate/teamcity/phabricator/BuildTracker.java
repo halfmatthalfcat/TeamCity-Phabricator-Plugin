@@ -70,8 +70,8 @@ public class BuildTracker implements Runnable {
     }
 
     private void sendTestReport(String testName, STestRun test) {
-        URI uri = null;
-        String scheme = "http";
+        URI uri;
+        String scheme = null;
         String url = this.appConfig.getPhabricatorUrl();
         String host = null;
         try {
@@ -85,7 +85,7 @@ public class BuildTracker implements Runnable {
 
         HttpRequestBuilder httpPost = new HttpRequestBuilder()
                 .post()
-                .setScheme(scheme)
+                .setScheme(scheme == null ? "http" : scheme)
                 .setHost(host == null ? url : host)
                 .setPath("/api/harbormaster.sendmessage")
                         //.setBody(payload.toString())
@@ -93,7 +93,7 @@ public class BuildTracker implements Runnable {
                 .addFormParam(new StringKeyValue("buildTargetPHID", this.appConfig.getHarbormasterTargetPHID()))
                 .addFormParam(new StringKeyValue("type", "work"))
                 .addFormParam(new StringKeyValue("unit[0][name]", test.getTest().getName().getTestMethodName()))
-                //.addFormParam(new StringKeyValue("unit[0][duration]", String.valueOf(test.getDuration())))
+                        //.addFormParam(new StringKeyValue("unit[0][duration]", String.valueOf(test.getDuration())))
                 .addFormParam(new StringKeyValue("unit[0][namespace]", test.getTest().getName().getClassName()));
 
         if (test.getStatus().isSuccessful()) {
