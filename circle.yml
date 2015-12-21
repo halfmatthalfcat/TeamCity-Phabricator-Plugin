@@ -1,0 +1,9 @@
+machine:
+  java:
+    version: oraclejdk8
+
+dependencies:
+  override:
+    # this needs to be overriden to prevent mvn from timing out while fetching 
+    # local modules from remote repositories
+    - echo "skipping 'mvn dependency:resolve'"
