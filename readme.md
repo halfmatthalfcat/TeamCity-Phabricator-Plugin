@@ -1,7 +1,7 @@
 #TeamCity Phabricator Plugin
 Real-time build triggers and reporting with JetBrain's TeamCity and Phacility's Phabricator (Harbormaster)
 
-We currently host this repo in Phabricator (and this repo is a mirror). If you submit PRs, we'll pull them in locally, test (until Travis/Circle) gets setup and commit them on our end, which will then be incorporated here. We may migrate all of this exclusively to GH but for now, this is the plan.
+We currently host this repo in Phabricator (and this repo is a mirror). If you submit PRs, we'll pull them in locally, test (until Travis/Circle gets setup) and commit them on our end, which will then be incorporated here. We may migrate all of this exclusively to GH but for now, this is the plan.
 
 ##Installation
 The plugin consists of two pieces: the TeamCity Java plugin (Build Feature) which itself consists of two parts: a Server and Agent plugin, as well as the custom Phabricator Harbormaster Build Step.
