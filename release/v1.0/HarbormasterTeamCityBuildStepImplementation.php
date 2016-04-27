@@ -60,13 +60,15 @@ final class HarbormasterTeamCityBuildStepImplementation
         ->addRevisionId($variables['buildable.revision'])
         ->build();
 
-    $process = curl_init($host);
+    $process = curl_init($uri);
     $credential_phid = $this->getSetting('credential');
     if ($credential_phid) {
        $key = PassphrasePasswordKey::loadFromPHID(
               $credential_phid,
               $viewer);
-       curl_setopt($process, CURLOPT_USERPWD, $key->getUsernameEnvelope()->openEnvelope() . ":" . $key->getPasswordEnvelope());
+       $username = $key->getUsernameEnvelope()->openEnvelope();
+       $password = $key->getPasswordEnvelope();
+       curl_setopt($process, CURLOPT_USERPWD, $username . ":" . $password);
     }
 
     curl_setopt($process, CURLOPT_HTTPHEADER, array('Content-Type: ' . $contentType));
