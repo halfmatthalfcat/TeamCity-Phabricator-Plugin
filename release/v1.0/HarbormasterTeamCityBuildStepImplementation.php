@@ -82,15 +82,15 @@ final class HarbormasterTeamCityBuildStepImplementation
     curl_close($process);
     list($headers, $body) = explode("\r\n\r\n", $return, 2);
 
-    $build_target
-      ->newLog($uri, 'http.head')
-      ->append($headers);
+//    $build_target
+//      ->newLog($uri, 'http.head')
+//      ->append($headers);
 
-    $build_target
-      ->newLog($uri, 'http.body')
-      ->append($body);
+//    $build_target
+//      ->newLog($uri, 'http.body')
+//      ->append($body);
 
-    if ($status->isError()) {
+    if ($status !== 200) {
       throw new HarbormasterBuildFailureException();
     }
   }
