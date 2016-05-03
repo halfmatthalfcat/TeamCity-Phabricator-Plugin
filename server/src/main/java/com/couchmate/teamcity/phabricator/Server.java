@@ -24,7 +24,7 @@ public class Server extends BuildServerAdapter {
     ){
         buildServerListener.addListener(this);
         this.logger = logger;
-        Loggers.SERVER.info("Phab Server Initialized");
+        Loggers.SERVER.error("Phab Server Initialized");
     }
 
     @Override

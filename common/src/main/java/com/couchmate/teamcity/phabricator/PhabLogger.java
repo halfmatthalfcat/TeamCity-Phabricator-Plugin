@@ -10,6 +10,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.util.Map;
+import java.util.Arrays;
 
 public final class PhabLogger {
 
@@ -24,6 +26,11 @@ public final class PhabLogger {
         this.buildProgressLogger = buildLogger;
     }
 
+    public void info(Map map){
+        Loggers.SERVER.info(Arrays.toString(map.entrySet().toArray()));
+
+    }
+
     public void info(String message){
         Loggers.SERVER.info(String.format("Phabricator Plugin: %s", message));
     }
@@ -32,6 +39,9 @@ public final class PhabLogger {
         Loggers.SERVER.warn(message, e);
     }
 
+    public void warn(String message){
+        Loggers.SERVER.warn(message);
+    }
     public void serverInfo(String message){
         Loggers.SERVER.info(message);
     }

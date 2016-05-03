@@ -2,7 +2,8 @@ package com.couchmate.teamcity.phabricator;
 
 import jetbrains.buildServer.log.Loggers;
 
-import java.io.File;
+import java.io.*;
+import java.net.*;
 import java.util.Map;
 import static com.couchmate.teamcity.phabricator.CommonUtils.isNullOrEmpty;
 
@@ -13,9 +14,11 @@ public final class AppConfig {
     private PhabLogger logger;
 
     private String phabricatorUrl;
+    private String phabricatorProtocol;
     private String conduitToken;
     private String arcPath;
     private String diffId;
+    private String revisionId;
     private String harbormasterTargetPHID;
     private String workingDir;
     private Boolean enabled = false;
@@ -29,6 +32,7 @@ public final class AppConfig {
     private final String CONDUIT_TOKEN = "tcphab.conduitToken";
     private final String ARC_PATH = "tcphab.pathToArc";
     private final String DIFF_ID = "diffId";
+    //private final String ENV_DIFF_ID = "env.diffId";
     private final String ENV_DIFF_ID = "env.diffId";
     private final String HARBORMASTER_PHID = "harbormasterTargetPHID";
     private final String ENV_HARBORMASTER_PHID = "env.harbormasterTargetPHID";
@@ -37,12 +41,19 @@ public final class AppConfig {
     private final String ENV_REVISION_ID = "env.revisionId";
 
     public void parse(){
+        logger.info(params);
         for(String value : this.params.keySet()){
             if(!isNullOrEmpty(value)){
                 switch(value){
                     case PHAB_URL:
                         logger.info(String.format("Found phabricatorUrl: %s", params.get(PHAB_URL)));
-                        this.phabricatorUrl = params.get(PHAB_URL);
+                        try {
+                          URL aURL = new URL(params.get(PHAB_URL));
+                          this.phabricatorProtocol = aURL.getProtocol();
+                          this.phabricatorUrl = aURL.getHost();
+                        } catch (IOException e) {
+                           logger.info(String.format("phabricator url could not be parsed: %s", e.getStackTrace()[0].toString()));
+                        }
                         break;
                     case CONDUIT_TOKEN:
                         logger.info(String.format("Found conduitToken: %s", params.get(CONDUIT_TOKEN)));
@@ -52,8 +63,12 @@ public final class AppConfig {
                         logger.info(String.format("Found arcPath: %s", params.get(ARC_PATH)));
                         this.arcPath = params.get(ARC_PATH);
                     case ENV_DIFF_ID:
-                        logger.info(String.format("Found diffId: %s", params.get(ENV_DIFF_ID)));
+                        logger.info(String.format("Found env diffId: %s", params.get(ENV_DIFF_ID)));
                         this.diffId = params.get(ENV_DIFF_ID);
+                        break;
+                    case REVISION_ID:
+                        logger.info(String.format("Found revisionId: %s", params.get(REVISION_ID)));
+                        this.revisionId = params.get(REVISION_ID);
                         break;
                     case DIFF_ID:
                         logger.info(String.format("Found diffId: %s", params.get(DIFF_ID)));
@@ -100,6 +115,10 @@ public final class AppConfig {
         return this.harbormasterTargetPHID;
     }
 
+    public String getPhabricatorProtocol() {
+        return this.phabricatorProtocol;
+    }
+
     public String getPhabricatorUrl() {
         return this.phabricatorUrl;
     }
@@ -110,6 +129,10 @@ public final class AppConfig {
 
     public String getDiffId() {
         return this.diffId;
+    }
+
+    public String getRevisionId() {
+        return this.revisionId;
     }
 
     public String getArcPath() { return this.arcPath; }
