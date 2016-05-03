@@ -6,6 +6,21 @@ import com.couchmate.teamcity.phabricator.StringKeyValue;
 import com.couchmate.teamcity.phabricator.conduit.HarbormasterMessage;
 import com.google.gson.Gson;
 import jetbrains.buildServer.agent.BuildFinishedStatus;
+import org.apache.http.conn.ssl.NoopHostnameVerifier;
+import org.apache.commons.io.IOUtils;
+import javax.net.ssl.SSLContext;
+import java.security.cert.X509Certificate;
+import java.security.cert.CertificateException;
+import org.apache.http.conn.socket.*;
+import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
+import org.apache.http.conn.ssl.SSLContextBuilder;
+import org.apache.http.conn.socket.PlainConnectionSocketFactory;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
+import org.apache.http.config.RegistryBuilder;
+import org.apache.http.config.Registry;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.conn.ssl.SSLSocketFactory;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
@@ -37,7 +52,7 @@ public class HarbormasterBuildStatus extends Task {
         try {
             this.httpPost = (HttpPost) new HttpRequestBuilder()
                     .post()
-                    .setScheme("http")
+                    .setScheme(this.appConfig.getPhabricatorProtocol())
                     .setHost(this.appConfig.getPhabricatorUrl())
                     .setPath("/api/harbormaster.sendmessage")
                     .addFormParam(new StringKeyValue("api.token", this.appConfig.getConduitToken()))
@@ -49,7 +64,7 @@ public class HarbormasterBuildStatus extends Task {
 
     @Override
     protected void execute() {
-        try(CloseableHttpClient httpClient = HttpClients.createDefault()){
+        try(CloseableHttpClient httpClient = this.createHttpClient()){
             httpClient.execute(this.httpPost);
         } catch (Exception e) { e.printStackTrace(); }
     }
@@ -57,6 +72,28 @@ public class HarbormasterBuildStatus extends Task {
     @Override
     protected void teardown() {
 
+    }
+
+    private CloseableHttpClient createHttpClient() {
+        try {
+             SSLContext sslContext = new SSLContextBuilder().loadTrustMaterial(null, new TrustSelfSignedStrategy() {
+                    @Override
+                    public boolean isTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+                        return true;
+                    }
+            }).build();
+            SSLConnectionSocketFactory sslConnectionFactory = new SSLConnectionSocketFactory(sslContext, SSLConnectionSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
+            final Registry<ConnectionSocketFactory> reg = RegistryBuilder.<ConnectionSocketFactory>create()
+                                                   .register("https", sslConnectionFactory)
+                                                   .register("http", new PlainConnectionSocketFactory())
+                                                   .build();
+            PoolingHttpClientConnectionManager cm = new PoolingHttpClientConnectionManager(reg);
+            CloseableHttpClient httpClient = HttpClients.custom().setConnectionManager(cm).setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE).build();
+            return httpClient;
+        } catch (Exception e) {
+           e.printStackTrace();
+           return null;
+        }
     }
 
     private String parseTeamCityBuildStatus(BuildFinishedStatus buildFinishedStatus){

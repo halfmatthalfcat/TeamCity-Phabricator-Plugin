@@ -6,8 +6,21 @@ import jetbrains.buildServer.serverSide.SRunningBuild;
 import jetbrains.buildServer.serverSide.STest;
 import jetbrains.buildServer.serverSide.STestRun;
 import jetbrains.buildServer.tests.TestInfo;
+import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.commons.io.IOUtils;
+import javax.net.ssl.SSLContext;
+import java.security.cert.X509Certificate;
+import java.security.cert.CertificateException;
+import org.apache.http.conn.socket.*;
+import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
+import org.apache.http.conn.ssl.SSLContextBuilder;
+import org.apache.http.conn.socket.PlainConnectionSocketFactory;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
+import org.apache.http.config.RegistryBuilder;
+import org.apache.http.config.Registry;
 import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.conn.ssl.SSLSocketFactory;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
@@ -38,6 +51,7 @@ public class BuildTracker implements Runnable {
                 try{
                     Map<String, String> params = new HashMap<>();
                     params.putAll(this.build.getBuildOwnParameters());
+
                     if(!this.build.getBuildFeaturesOfType("phabricator").isEmpty())
                         params.putAll(this.build.getBuildFeaturesOfType("phabricator").iterator().next().getParameters());
                     for(String param : params.keySet())
@@ -65,11 +79,11 @@ public class BuildTracker implements Runnable {
         Loggers.SERVER.info(this.build.getBuildNumber() + " finished");
     }
 
-    private void sendTestReport(String testName, STestRun test){
+    private void sendTestReport(String testName, STestRun test) {
         HttpRequestBuilder httpPost = new HttpRequestBuilder()
                 .post()
                 .setHost(this.appConfig.getPhabricatorUrl())
-                .setScheme("http")
+                .setScheme(this.appConfig.getPhabricatorProtocol())
                 .setPath("/api/harbormaster.sendmessage")
                         //.setBody(payload.toString())
                 .addFormParam(new StringKeyValue("api.token", this.appConfig.getConduitToken()))
@@ -84,14 +98,28 @@ public class BuildTracker implements Runnable {
         } else if (test.getStatus().isFailed()){
             httpPost.addFormParam(new StringKeyValue("unit[0][result]", "fail"));
         }
+    try {
+    SSLContext sslContext = new SSLContextBuilder().loadTrustMaterial(null, new TrustSelfSignedStrategy() {
+                @Override
+                public boolean isTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+                    return true;
+                }
+        }).build();
+    SSLConnectionSocketFactory sslConnectionFactory = new SSLConnectionSocketFactory(sslContext, SSLConnectionSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
+    final Registry<ConnectionSocketFactory> reg = RegistryBuilder.<ConnectionSocketFactory>create()
+                                                   .register("https", sslConnectionFactory)
+                                                   .register("http", new PlainConnectionSocketFactory())
+                                                   .build();
+    PoolingHttpClientConnectionManager cm = new PoolingHttpClientConnectionManager(reg);
+    CloseableHttpClient httpClient = HttpClients.custom().setConnectionManager(cm).setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE).build();
 
-        try (CloseableHttpClient httpClient = HttpClients.createDefault()){
             try(CloseableHttpResponse response = httpClient.execute(httpPost.build())){
-                Loggers.SERVER.info(String.format("Test Response: %s\nTest Body: %s\n",
+                Loggers.SERVER.warn(String.format("Test Response: %s\nTest Body: %s\n",
                         response.getStatusLine().getStatusCode(),
                         IOUtils.toString(response.getEntity().getContent())));
-            }
-        } catch (Exception e) { Loggers.SERVER.warn("Send error", e); }
+            } catch (Exception e) { Loggers.SERVER.error("Send error", e); }
+    } catch (Exception e) {
+       Loggers.SERVER.error("Send error", e);
     }
-
+    }
 }

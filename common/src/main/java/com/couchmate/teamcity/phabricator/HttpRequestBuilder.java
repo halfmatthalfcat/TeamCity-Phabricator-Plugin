@@ -1,6 +1,8 @@
 package com.couchmate.teamcity.phabricator;
 
 import com.couchmate.teamcity.phabricator.TCPhabException;
+
+import org.apache.http.ParseException;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -8,7 +10,9 @@ import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.util.EntityUtils;
 
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -91,9 +95,29 @@ public final class HttpRequestBuilder {
         if(httpRequest == null) throw new TCPhabException("Must provide a method");
         if(CommonUtils.isNullOrEmpty(scheme)) throw new TCPhabException("Must provide a scheme");
         if(CommonUtils.isNullOrEmpty(host)) throw new TCPhabException("Must provide a host");
-        if(port == null) this.port = 80;
+        if(scheme.equals("http")) {
+            this.port = 80;
+        }
+        if (scheme.equals("https")) {
+            this.port = 443;
+        }
         if(CommonUtils.isNullOrEmpty(path)) throw new TCPhabException("Must provide a path");
-
+        System.out.println(this.scheme);
+        System.out.println(this.host);
+        System.out.println(this.port);
+        System.out.println(this.path);
+        try {
+			System.out.println(EntityUtils.toString(new UrlEncodedFormEntity(this.formParams)));
+		} catch (ParseException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} catch (UnsupportedEncodingException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
         this.uri = new URI(
                 this.scheme,
                 null,
