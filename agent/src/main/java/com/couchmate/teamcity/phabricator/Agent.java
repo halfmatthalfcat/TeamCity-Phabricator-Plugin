@@ -18,6 +18,9 @@ public class Agent extends AgentLifeCycleAdapter {
     private AppConfig appConfig = null;
     private Collection<AgentBuildFeature> buildFeatures = null;
     private ConduitClient conduitClient = null;
+    private String serverUrl = null;
+    private boolean first = true;
+
     public Agent(
             @NotNull final EventDispatcher<AgentLifeCycleListener> eventDispatcher,
             @NotNull final PhabLogger phabLogger,
@@ -37,33 +40,34 @@ public class Agent extends AgentLifeCycleAdapter {
         this.logger.info("getting build id " + runningBuild.getBuildId());
         this.logger.info("Started");
         this.buildFeatures = runningBuild.getBuildFeaturesOfType("phabricator");
-        try {
-            Map<String, String> configs = new HashMap<>();
-            configs.putAll(runningBuild.getSharedBuildParameters().getEnvironmentVariables());
-            configs.putAll(runningBuild.getSharedConfigParameters());
-            if(!this.buildFeatures.isEmpty()) configs.putAll(this.buildFeatures.iterator().next().getParameters());
-            else logger.info("No build features found");
-
-            this.appConfig.setParams(configs);
-            this.appConfig.setLogger(this.logger);
-            this.appConfig.parse();
-
-            if (this.appConfig.isEnabled()) {
-                this.logger.info("Plugin is enabled, starting patch process");
-                this.appConfig.setWorkingDir(runningBuild.getCheckoutDirectory().getPath());
-
-                new ApplyPatch(runningBuild, this.appConfig, this.logger).run();
-                this.conduitClient = new ConduitClient(this.appConfig.getPhabricatorUrl(), this.appConfig.getPhabricatorProtocol(), this.appConfig.getConduitToken(), logger);
-                this.conduitClient.submitDifferentialComment(this.appConfig.getRevisionId(), "Build started: http://130.211.136.223/viewLog.html?buildId=" + runningBuild.getBuildId());
-            } else {
-                this.logger.info("Plugin is disabled.");
-            }
-        } catch (Exception e) { this.logger.warn("Build Started Error: ", e); }
+        if(!this.buildFeatures.isEmpty()) {
+            try {
+                Map<String, String> configs = new HashMap<>();
+                configs.putAll(runningBuild.getSharedBuildParameters().getEnvironmentVariables());
+                configs.putAll(runningBuild.getSharedConfigParameters());
+                configs.putAll(this.buildFeatures.iterator().next().getParameters());
+                this.appConfig.setParams(configs);
+                this.appConfig.setLogger(this.logger);
+                this.appConfig.parse();
+            } catch (Exception e) { this.logger.warn("Build Started Error: ", e); }
+        } 
+        else {
+            logger.info("No build features found");
+        }  
     }
 
     @Override
     public void beforeRunnerStart(@NotNull BuildRunnerContext runner) {
         super.beforeRunnerStart(runner);
+
+        if (this.appConfig.isEnabled()) {
+            this.logger.info("Plugin is enabled, starting patch process");
+            this.appConfig.setWorkingDir(runner.getWorkingDirectory().getPath());
+            new ApplyPatch(runner, this.appConfig, this.logger).run();
+            this.conduitClient = new ConduitClient(this.appConfig.getPhabricatorUrl(), this.appConfig.getPhabricatorProtocol(), this.appConfig.getConduitToken(), logger);
+            this.conduitClient.submitDifferentialComment(this.appConfig.getRevisionId(), "Build started: http://130.211.136.223/viewLog.html?buildId=" + runner.getBuild().getBuildId());
+            this.first = false;
+        }
         //If plugin enabled, run it
     }
 
