@@ -78,7 +78,7 @@ public class Agent extends AgentLifeCycleAdapter {
         String buildInfo = "http://130.211.136.223/viewLog.html?buildId=" + build.getBuildId();
         if(status.isFailed() && status.isFinished()) {
            this.conduitClient.submitDifferentialComment(this.appConfig.getRevisionId(), "Build failed: " + buildInfo);
-        } else if (status.isFailed() && !status.isFinished()) {
+        } else if (!status.isFailed() && status.isFinished()) {
             this.conduitClient.submitDifferentialComment(this.appConfig.getRevisionId(), "Build successful: " +buildInfo);
         } else {
             this.conduitClient.submitDifferentialComment(this.appConfig.getRevisionId(), "Build interrupted : " +buildInfo);

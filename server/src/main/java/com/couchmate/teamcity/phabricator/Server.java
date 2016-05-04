@@ -7,7 +7,7 @@ import jetbrains.buildServer.tests.TestInfo;
 import jetbrains.buildServer.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,7 +15,7 @@ import java.util.Map;
 public class Server extends BuildServerAdapter {
 
     private Map<String, List<STestRun>> tests = new HashMap<>();
-
+    private Collection<SBuildFeatureDescriptor> buildFeatures = null;
     private PhabLogger logger;
 
     public Server(
@@ -30,6 +30,9 @@ public class Server extends BuildServerAdapter {
     @Override
     public void buildStarted(@NotNull SRunningBuild runningBuild){
         super.buildStarted(runningBuild);
-        new Thread(new BuildTracker(runningBuild)).start();
+        this.buildFeatures = runningBuild.getBuildFeaturesOfType("phabricator");
+        if (!this.buildFeatures.isEmpty()) {
+            new Thread(new BuildTracker(runningBuild)).start();
+        }
     }
 }
