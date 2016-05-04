@@ -17,7 +17,6 @@ public class ApplyPatch extends Task {
     private AppConfig appConfig;
     private GitClient gitClient = null;
     private ArcanistClient arcanistClient = null;
-    private ConduitClient conduitClient = null;
     private BuildRunnerContext runner;
 
     public ApplyPatch(BuildRunnerContext runner, AppConfig appConfig, PhabLogger logger){
@@ -32,7 +31,6 @@ public class ApplyPatch extends Task {
         this.gitClient = new GitClient(this.appConfig.getWorkingDir());
         this.arcanistClient = new ArcanistClient(
                 this.appConfig.getConduitToken(), this.appConfig.getWorkingDir(), this.appConfig.getArcPath());
-        this.conduitClient = new ConduitClient(this.appConfig.getPhabricatorUrl(), this.appConfig.getConduitToken());
     }
 
     @Override
@@ -46,7 +44,7 @@ public class ApplyPatch extends Task {
             int cleanCode = clean.exec().join();
             logger.info(String.format("Clean exited with code: %d", cleanCode));
 
-            CommandBuilder.Command patch = arcanistClient.patch(this.appConfig.getDiffId());
+            CommandBuilder.Command patch = arcanistClient.patch(this.appConfig.getRevisionId());
             int patchCode = patch.exec().join();
             logger.info(String.format("Patch exited with code: %d", patchCode));
 
