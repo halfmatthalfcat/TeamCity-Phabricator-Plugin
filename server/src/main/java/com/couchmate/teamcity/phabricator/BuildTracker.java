@@ -46,37 +46,35 @@ public class BuildTracker implements Runnable {
     }
 
     public void run(){
-        while (!build.isFinished()){
-            if(!appConfig.isEnabled()){
-                try{
-                    Map<String, String> params = new HashMap<>();
-                    params.putAll(this.build.getBuildOwnParameters());
-
-                    if(!this.build.getBuildFeaturesOfType("phabricator").isEmpty())
-                        params.putAll(this.build.getBuildFeaturesOfType("phabricator").iterator().next().getParameters());
-                    for(String param : params.keySet())
-                        if(param != null) Loggers.AGENT.info(String.format("Found %s", param));
-                    this.appConfig.setParams(params);
-                    this.appConfig.parse();
-                } catch (Exception e) { Loggers.SERVER.error("BuildTracker Param Parse", e); }
-            } else {
-                build
-                        .getBuildStatistics(BuildStatisticsOptions.ALL_TESTS_NO_DETAILS)
-                        .getAllTests()
-                        .forEach(
-                                testRun -> {
-                                    if(!this.tests.containsKey(testRun.getTest().getName().getAsString())) {
-                                        this.tests.put(testRun.getTest().getName().getAsString(),
-                                                testRun.getTest());
-                                        sendTestReport(testRun.getTest().getName().getAsString(),
-                                                testRun);
-                                    }
-
-                                }
-                        );
-            }
+        if(!appConfig.isEnabled()){
+            try{
+                Map<String, String> params = new HashMap<>();
+                params.putAll(this.build.getBuildOwnParameters());
+                params.putAll(this.build.getBuildFeaturesOfType("phabricator").iterator().next().getParameters());
+                for(String param : params.keySet())
+                    if(param != null) Loggers.AGENT.info(String.format("Found %s", param));
+                this.appConfig.setParams(params);
+                this.appConfig.parse();
+            } catch (Exception e) { Loggers.SERVER.error("BuildTracker Param Parse", e); }
         }
-        Loggers.SERVER.info(this.build.getBuildNumber() + " finished");
+        while (!build.isFinished()){
+            if(!appConfig.isEnabled())
+                return;
+
+            build.getBuildStatistics(BuildStatisticsOptions.ALL_TESTS_NO_DETAILS)
+                    .getAllTests()
+                    .forEach(
+                            testRun -> {
+                                if(!this.tests.containsKey(testRun.getTest().getName().getAsString())) {
+                                    this.tests.put(testRun.getTest().getName().getAsString(),
+                                            testRun.getTest());
+                                    sendTestReport(testRun.getTest().getName().getAsString(),
+                                            testRun);
+                                }
+                            }
+                    );
+         }
+         Loggers.SERVER.info(this.build.getBuildNumber() + " finished");
     }
 
     private void sendTestReport(String testName, STestRun test) {
@@ -85,12 +83,11 @@ public class BuildTracker implements Runnable {
                 .setHost(this.appConfig.getPhabricatorUrl())
                 .setScheme(this.appConfig.getPhabricatorProtocol())
                 .setPath("/api/harbormaster.sendmessage")
-                        //.setBody(payload.toString())
                 .addFormParam(new StringKeyValue("api.token", this.appConfig.getConduitToken()))
                 .addFormParam(new StringKeyValue("buildTargetPHID", this.appConfig.getHarbormasterTargetPHID()))
                 .addFormParam(new StringKeyValue("type", "work"))
                 .addFormParam(new StringKeyValue("unit[0][name]", test.getTest().getName().getTestMethodName()))
-                //.addFormParam(new StringKeyValue("unit[0][duration]", String.valueOf(test.getDuration())))
+                .addFormParam(new StringKeyValue("unit[0][duration]", String.valueOf(test.getDuration())))
                 .addFormParam(new StringKeyValue("unit[0][namespace]", test.getTest().getName().getClassName()));
 
         if(test.getStatus().isSuccessful()){
@@ -98,28 +95,28 @@ public class BuildTracker implements Runnable {
         } else if (test.getStatus().isFailed()){
             httpPost.addFormParam(new StringKeyValue("unit[0][result]", "fail"));
         }
-    try {
-    SSLContext sslContext = new SSLContextBuilder().loadTrustMaterial(null, new TrustSelfSignedStrategy() {
+        try {
+            SSLContext sslContext = new SSLContextBuilder().loadTrustMaterial(null, new TrustSelfSignedStrategy() {
                 @Override
                 public boolean isTrusted(X509Certificate[] chain, String authType) throws CertificateException {
                     return true;
                 }
-        }).build();
-    SSLConnectionSocketFactory sslConnectionFactory = new SSLConnectionSocketFactory(sslContext, SSLConnectionSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
-    final Registry<ConnectionSocketFactory> reg = RegistryBuilder.<ConnectionSocketFactory>create()
+             }).build();
+             SSLConnectionSocketFactory sslConnectionFactory = new SSLConnectionSocketFactory(sslContext, SSLConnectionSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
+             final Registry<ConnectionSocketFactory> reg = RegistryBuilder.<ConnectionSocketFactory>create()
                                                    .register("https", sslConnectionFactory)
                                                    .register("http", new PlainConnectionSocketFactory())
                                                    .build();
-    PoolingHttpClientConnectionManager cm = new PoolingHttpClientConnectionManager(reg);
-    CloseableHttpClient httpClient = HttpClients.custom().setConnectionManager(cm).setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE).build();
+             PoolingHttpClientConnectionManager cm = new PoolingHttpClientConnectionManager(reg);
+             CloseableHttpClient httpClient = HttpClients.custom().setConnectionManager(cm).setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE).build();
 
             try(CloseableHttpResponse response = httpClient.execute(httpPost.build())){
                 Loggers.SERVER.warn(String.format("Test Response: %s\nTest Body: %s\n",
                         response.getStatusLine().getStatusCode(),
                         IOUtils.toString(response.getEntity().getContent())));
             } catch (Exception e) { Loggers.SERVER.error("Send error", e); }
-    } catch (Exception e) {
-       Loggers.SERVER.error("Send error", e);
-    }
+        } catch (Exception e) {
+           Loggers.SERVER.error("Send error", e);
+        }
     }
 }
