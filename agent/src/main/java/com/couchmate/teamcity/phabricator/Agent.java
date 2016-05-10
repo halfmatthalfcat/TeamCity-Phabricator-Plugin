@@ -20,6 +20,7 @@ public class Agent extends AgentLifeCycleAdapter {
     private ConduitClient conduitClient = null;
     private String serverUrl = null;
     private boolean first = true;
+    private AgentRunningBuild runningBuild = null;
 
     public Agent(
             @NotNull final EventDispatcher<AgentLifeCycleListener> eventDispatcher,
@@ -37,30 +38,28 @@ public class Agent extends AgentLifeCycleAdapter {
         super.buildStarted(runningBuild);
         //Get logger
         this.logger.setBuildLogger(runningBuild.getBuildLogger());
-        this.logger.info("getting build id " + runningBuild.getBuildId());
-        this.logger.info("Started");
-        this.buildFeatures = runningBuild.getBuildFeaturesOfType("phabricator");
-        if(!this.buildFeatures.isEmpty()) {
-            try {
-                Map<String, String> configs = new HashMap<>();
-                configs.putAll(runningBuild.getSharedBuildParameters().getEnvironmentVariables());
-                configs.putAll(runningBuild.getSharedConfigParameters());
-                configs.putAll(this.buildFeatures.iterator().next().getParameters());
-                this.appConfig.setParams(configs);
-                this.appConfig.setLogger(this.logger);
-                this.appConfig.parse();
-            } catch (Exception e) { this.logger.warn("Build Started Error: ", e); }
-        } 
-        else {
-            logger.info("No build features found");
-        }  
+        this.runningBuild = runningBuild;
+        this.buildFeatures = this.runningBuild.getBuildFeaturesOfType("phabricator");
     }
 
     @Override
     public void beforeRunnerStart(@NotNull BuildRunnerContext runner) {
         super.beforeRunnerStart(runner);
 
+        if(!this.buildFeatures.isEmpty()) {
+            try {
+                Map<String, String> configs = new HashMap<>();
+                configs.putAll(runner.getBuild().getSharedBuildParameters().getEnvironmentVariables());
+                configs.putAll(runner.getBuild().getSharedConfigParameters());
+                configs.putAll(this.buildFeatures.iterator().next().getParameters());
+                this.appConfig.setParams(configs);
+                this.appConfig.setLogger(this.logger);
+                this.appConfig.parse();
+            } catch (Exception e) { this.logger.warn("Build Started Error: ", e); }
+        }
+
         if (this.appConfig.isEnabled()) {
+            this.logger.info("getting build id " + runner.getBuild().getBuildId());
             this.logger.info("Plugin is enabled, starting patch process");
             this.appConfig.setWorkingDir(runner.getWorkingDirectory().getPath());
             new ApplyPatch(runner, this.appConfig, this.logger).run();
