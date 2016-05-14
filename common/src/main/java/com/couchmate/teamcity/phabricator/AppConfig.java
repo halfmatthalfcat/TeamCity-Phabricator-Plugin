@@ -16,6 +16,7 @@ public final class AppConfig {
     private String phabricatorUrl;
     private String phabricatorProtocol;
     private String conduitToken;
+    private String codeLocation;
     private String arcPath;
     private String diffId;
     private String revisionId;
@@ -30,6 +31,7 @@ public final class AppConfig {
     //CONFIG VARS
     private final String PHAB_URL = "tcphab.phabricatorUrl";
     private final String CONDUIT_TOKEN = "tcphab.conduitToken";
+    private final String CODE_LOCATION = "tcphab.pathToCode";
     private final String ARC_PATH = "tcphab.pathToArc";
     private final String DIFF_ID = "diffId";
     //private final String ENV_DIFF_ID = "env.diffId";
@@ -41,6 +43,7 @@ public final class AppConfig {
     private final String ENV_REVISION_ID = "env.revisionId";
 
     public void parse(){
+        enabled = false;
         logger.info(params);
         for(String value : this.params.keySet()){
             if(!isNullOrEmpty(value)){
@@ -58,6 +61,10 @@ public final class AppConfig {
                     case CONDUIT_TOKEN:
                         logger.info(String.format("Found conduitToken: %s", params.get(CONDUIT_TOKEN)));
                         this.conduitToken = params.get(CONDUIT_TOKEN);
+                        break;
+                    case CODE_LOCATION: 
+                        logger.info(String.format("Found Code Location: %s", params.get(CODE_LOCATION)));
+                        this.codeLocation = params.get(CODE_LOCATION);
                         break;
                     case ARC_PATH:
                         logger.info(String.format("Found arcPath: %s", params.get(ARC_PATH)));
@@ -108,7 +115,11 @@ public final class AppConfig {
     }
 
     public void setWorkingDir(String workingDir) {
-        this.workingDir = workingDir;
+        if(!isNullOrEmpty(this.codeLocation)) {
+            this.workingDir = workingDir + "/" + this.codeLocation;
+        } else {
+            this.workingDir = workingDir;
+        }
     }
 
     public String getHarbormasterTargetPHID() {
@@ -139,5 +150,9 @@ public final class AppConfig {
 
     public Boolean isEnabled() {
         return this.enabled;
+    }
+
+    public void setEnabled(Boolean enabled) {
+        this.enabled = enabled;
     }
 }
