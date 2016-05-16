@@ -20,6 +20,8 @@ public class Agent extends AgentLifeCycleAdapter {
     private ConduitClient conduitClient = null;
     private String serverUrl = null;
     private boolean first = true;
+    private Map<String, Integer> unique;
+    private AgentRunningBuild runningBuild = null;
 
     public Agent(
             @NotNull final EventDispatcher<AgentLifeCycleListener> eventDispatcher,
@@ -37,36 +39,43 @@ public class Agent extends AgentLifeCycleAdapter {
         super.buildStarted(runningBuild);
         //Get logger
         this.logger.setBuildLogger(runningBuild.getBuildLogger());
-        this.logger.info("getting build id " + runningBuild.getBuildId());
-        this.logger.info("Started");
-        this.buildFeatures = runningBuild.getBuildFeaturesOfType("phabricator");
+        this.runningBuild = runningBuild;
+        // temporarily set this statically this.serverUrl = runningBuild.getAgentConfiguration().getServerUrl();
+        this.serverUrl = "http://teamcity.devops.wepay-inc.com/"; 
+        this.unique = new HashMap<String, Integer>();
+
+    }
+
+    private void refreshConfig(AgentRunningBuild build) {
+        this.buildFeatures = build.getBuildFeaturesOfType("phabricator");
+        this.appConfig.setParams(null);
+        this.appConfig.setEnabled(false);
         if(!this.buildFeatures.isEmpty()) {
             try {
                 Map<String, String> configs = new HashMap<>();
-                configs.putAll(runningBuild.getSharedBuildParameters().getEnvironmentVariables());
-                configs.putAll(runningBuild.getSharedConfigParameters());
+                configs.putAll(build.getSharedBuildParameters().getEnvironmentVariables());
+                configs.putAll(build.getSharedConfigParameters());
                 configs.putAll(this.buildFeatures.iterator().next().getParameters());
                 this.appConfig.setParams(configs);
                 this.appConfig.setLogger(this.logger);
                 this.appConfig.parse();
-            } catch (Exception e) { this.logger.warn("Build Started Error: ", e); }
-        } 
-        else {
-            logger.info("No build features found");
-        }  
+                int count = this.unique.containsKey(this.appConfig.getHarbormasterTargetPHID()) ? this.unique.get(this.appConfig.getHarbormasterTargetPHID()) : 0;
+                this.unique.put(this.appConfig.getHarbormasterTargetPHID(), count + 1);
+              } catch (Exception e) { this.logger.warn("Build Started Error: ", e); }
+         }
     }
-
     @Override
     public void beforeRunnerStart(@NotNull BuildRunnerContext runner) {
         super.beforeRunnerStart(runner);
-
-        if (this.appConfig.isEnabled()) {
+        this.refreshConfig(runner.getBuild());
+        if (this.appConfig.isEnabled() && this.unique.get(this.appConfig.getHarbormasterTargetPHID()) == 1) {
+            this.logger.info("getting build id " + runner.getBuild().getBuildId());
             this.logger.info("Plugin is enabled, starting patch process");
             this.appConfig.setWorkingDir(runner.getWorkingDirectory().getPath());
-            new ApplyPatch(runner, this.appConfig, this.logger).run();
+            this.logger.info("working dir = " + this.appConfig.getWorkingDir());
+            new ApplyPatch(runner, this.appConfig).run();
             this.conduitClient = new ConduitClient(this.appConfig.getPhabricatorUrl(), this.appConfig.getPhabricatorProtocol(), this.appConfig.getConduitToken(), logger);
-            this.conduitClient.submitDifferentialComment(this.appConfig.getRevisionId(), "Build started: http://130.211.136.223/viewLog.html?buildId=" + runner.getBuild().getBuildId());
-            this.first = false;
+            this.conduitClient.submitDifferentialComment(this.appConfig.getRevisionId(), "Build started: " + this.serverUrl + "/viewLog.html?buildId=" + runner.getBuild().getBuildId());
         }
         //If plugin enabled, run it
     }
@@ -79,13 +88,16 @@ public class Agent extends AgentLifeCycleAdapter {
     @Override
     public void buildFinished(@NotNull AgentRunningBuild build, @NotNull BuildFinishedStatus status) {
         super.buildFinished(build, status);
-        String buildInfo = "http://130.211.136.223/viewLog.html?buildId=" + build.getBuildId();
-        if(status.isFailed() && status.isFinished()) {
-           this.conduitClient.submitDifferentialComment(this.appConfig.getRevisionId(), "Build failed: " + buildInfo);
-        } else if (!status.isFailed() && status.isFinished()) {
-            this.conduitClient.submitDifferentialComment(this.appConfig.getRevisionId(), "Build successful: " +buildInfo);
-        } else {
-            this.conduitClient.submitDifferentialComment(this.appConfig.getRevisionId(), "Build interrupted : " +buildInfo);
+        this.refreshConfig(build);
+        if(this.appConfig.isEnabled()) {
+            String buildInfo = this.serverUrl + "/viewLog.html?buildId=" + build.getBuildId();
+            if(status.isFailed() && status.isFinished()) {
+                this.conduitClient.submitDifferentialComment(this.appConfig.getRevisionId(), "Build failed: " + buildInfo);
+            } else if (!status.isFailed() && status.isFinished()) {
+                this.conduitClient.submitDifferentialComment(this.appConfig.getRevisionId(), "Build successful: " +buildInfo);
+            } else {
+                this.conduitClient.submitDifferentialComment(this.appConfig.getRevisionId(), "Build Error : " +buildInfo);
+            }
         }
     }
 }

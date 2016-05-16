@@ -4,6 +4,7 @@ import com.couchmate.teamcity.phabricator.CommandBuilder;
 import com.couchmate.teamcity.phabricator.KeyValue;
 import com.couchmate.teamcity.phabricator.StringKeyValue;
 import com.couchmate.teamcity.phabricator.TCPhabException;
+import com.couchmate.teamcity.phabricator.PhabLogger;
 
 
 import java.util.regex.Matcher;

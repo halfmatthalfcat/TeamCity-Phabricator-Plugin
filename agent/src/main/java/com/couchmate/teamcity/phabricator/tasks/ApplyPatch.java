@@ -19,9 +19,9 @@ public class ApplyPatch extends Task {
     private ArcanistClient arcanistClient = null;
     private BuildRunnerContext runner;
 
-    public ApplyPatch(BuildRunnerContext runner, AppConfig appConfig, PhabLogger logger){
+    public ApplyPatch(BuildRunnerContext runner, AppConfig appConfig){
         this.appConfig = appConfig;
-        this.logger = logger;
+        this.logger = new PhabLogger();
         this.runner = runner;
     }
 

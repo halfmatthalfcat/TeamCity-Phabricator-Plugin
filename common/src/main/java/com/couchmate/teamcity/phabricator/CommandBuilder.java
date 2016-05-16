@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import com.couchmate.teamcity.phabricator.PhabLogger;
 
 public final class CommandBuilder {
 
@@ -12,6 +13,7 @@ public final class CommandBuilder {
     private String action = null;
     private String workingDir = null;
     private List<String> args = new ArrayList<String>();
+    private PhabLogger logger = null;
 
     private static Boolean isNullOrEmpty(Object o){
         if(o == null) return true;
@@ -127,7 +129,7 @@ public final class CommandBuilder {
         private final File workingDir;
         private ProcessBuilder processBuilder;
         private Process process;
-
+        private PhabLogger logger;
         private Command(){
             this.workingDir = null;
         }
@@ -137,7 +139,7 @@ public final class CommandBuilder {
                 final String workingDir
         ){
             this.workingDir = isNullOrEmpty(workingDir) ? null : new File(workingDir);
-
+            this.logger = new PhabLogger();
             this.processBuilder = new ProcessBuilder(args);
             this.processBuilder.directory(this.workingDir);
             this.processBuilder.inheritIO();
@@ -145,13 +147,13 @@ public final class CommandBuilder {
 
         public Command exec(){
             try{ process = this.processBuilder.start(); }
-            catch (Exception e) { e.printStackTrace(); }
+            catch (Exception e) { logger.warn(e.getMessage(), e); }
             return this;
         }
 
         public int join(){
             try{ return this.process.waitFor(); }
-            catch (Exception e) { e.printStackTrace(); return 666; }
+            catch (Exception e) { logger.warn(e.getMessage(), e); return 666; }
         }
 
     }
