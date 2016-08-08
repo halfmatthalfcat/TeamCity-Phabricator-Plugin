@@ -32,7 +32,12 @@ public class Server extends BuildServerAdapter {
         super.buildStarted(runningBuild);
         this.buildFeatures = runningBuild.getBuildFeaturesOfType("phabricator");
         if (!this.buildFeatures.isEmpty()) {
-            new Thread(new BuildTracker(runningBuild)).start();
+            try {
+                new Thread(new BuildTracker(runningBuild)).start();
+            }
+            catch(Exception e) {
+                Loggers.SERVER.error("Exception thrown by BuildTracker e = " + e.getMessage());
+            }
         }
     }
 }

@@ -22,6 +22,7 @@ public final class AppConfig {
     private String revisionId;
     private String harbormasterTargetPHID;
     private String workingDir;
+    private String errormsg;
     private Boolean enabled = false;
 
     public AppConfig(){
@@ -33,8 +34,8 @@ public final class AppConfig {
     private final String CONDUIT_TOKEN = "tcphab.conduitToken";
     private final String CODE_LOCATION = "tcphab.pathToCode";
     private final String ARC_PATH = "tcphab.pathToArc";
+    private final String ERROR_MSG = "tcphab.errorInfo";
     private final String DIFF_ID = "diffId";
-    //private final String ENV_DIFF_ID = "env.diffId";
     private final String ENV_DIFF_ID = "env.diffId";
     private final String HARBORMASTER_PHID = "harbormasterTargetPHID";
     private final String ENV_HARBORMASTER_PHID = "env.harbormasterTargetPHID";
@@ -80,6 +81,10 @@ public final class AppConfig {
                     case DIFF_ID:
                         logger.info(String.format("Found diffId: %s", params.get(DIFF_ID)));
                         this.diffId = params.get(DIFF_ID);
+                        break;
+                    case ERROR_MSG:
+                        logger.info(String.format("Found Error Msg: %s", params.get(ERROR_MSG)));
+                        this.errormsg = params.get(ERROR_MSG);
                         break;
                     case ENV_HARBORMASTER_PHID:
                         logger.info(String.format("Found harbormasterTargetPHID: %s", params.get(ENV_HARBORMASTER_PHID)));
@@ -140,6 +145,10 @@ public final class AppConfig {
 
     public String getDiffId() {
         return this.diffId;
+    }
+
+    public String getErrorMsg() {
+        return this.errormsg;
     }
 
     public String getRevisionId() {

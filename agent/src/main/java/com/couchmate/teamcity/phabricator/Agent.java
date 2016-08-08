@@ -1,10 +1,11 @@
 package com.couchmate.teamcity.phabricator;
 
 import com.couchmate.teamcity.phabricator.tasks.ApplyPatch;
-import com.couchmate.teamcity.phabricator.conduit.ConduitClient;
+import com.couchmate.teamcity.phabricator.conduit.*;
 import com.couchmate.teamcity.phabricator.tasks.HarbormasterBuildStatus;
 import jetbrains.buildServer.agent.*;
 import jetbrains.buildServer.util.EventDispatcher;
+import static jetbrains.buildServer.agent.AgentRuntimeProperties.TEAMCITY_SERVER_URL;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -18,7 +19,6 @@ public class Agent extends AgentLifeCycleAdapter {
     private AppConfig appConfig = null;
     private Collection<AgentBuildFeature> buildFeatures = null;
     private ConduitClient conduitClient = null;
-    private String serverUrl = null;
     private boolean first = true;
     private Map<String, Integer> unique;
     private AgentRunningBuild runningBuild = null;
@@ -40,8 +40,7 @@ public class Agent extends AgentLifeCycleAdapter {
         //Get logger
         this.logger.setBuildLogger(runningBuild.getBuildLogger());
         this.runningBuild = runningBuild;
-        // temporarily set this statically this.serverUrl = runningBuild.getAgentConfiguration().getServerUrl();
-        this.serverUrl = "http://teamcity.devops.wepay-inc.com/"; 
+        this.logger.info(TEAMCITY_SERVER_URL);
         this.unique = new HashMap<String, Integer>();
 
     }
@@ -69,13 +68,14 @@ public class Agent extends AgentLifeCycleAdapter {
         super.beforeRunnerStart(runner);
         this.refreshConfig(runner.getBuild());
         if (this.appConfig.isEnabled() && this.unique.get(this.appConfig.getHarbormasterTargetPHID()) == 1) {
-            this.logger.info("getting build id " + runner.getBuild().getBuildId());
+            this.logger.info("Getting Build Id " + runner.getBuild().getBuildId());
             this.logger.info("Plugin is enabled, starting patch process");
             this.appConfig.setWorkingDir(runner.getWorkingDirectory().getPath());
             this.logger.info("working dir = " + this.appConfig.getWorkingDir());
             new ApplyPatch(runner, this.appConfig).run();
             this.conduitClient = new ConduitClient(this.appConfig.getPhabricatorUrl(), this.appConfig.getPhabricatorProtocol(), this.appConfig.getConduitToken(), logger);
-            this.conduitClient.submitDifferentialComment(this.appConfig.getRevisionId(), "Build started: " + this.serverUrl + "/viewLog.html?buildId=" + runner.getBuild().getBuildId());
+            this.conduitClient.submitDifferentialComment(this.appConfig.getRevisionId(), "Build started: " + TEAMCITY_SERVER_URL + "/viewLog.html?buildId=" + runner.getBuild().getBuildId());
+            this.conduitClient.submitHarbormasterMessage(this.appConfig.getHarbormasterTargetPHID(), "work");
         }
         //If plugin enabled, run it
     }
@@ -90,13 +90,17 @@ public class Agent extends AgentLifeCycleAdapter {
         super.buildFinished(build, status);
         this.refreshConfig(build);
         if(this.appConfig.isEnabled()) {
-            String buildInfo = this.serverUrl + "/viewLog.html?buildId=" + build.getBuildId();
+            String buildInfo = TEAMCITY_SERVER_URL + "/viewLog.html?buildId=" + build.getBuildId();
             if(status.isFailed() && status.isFinished()) {
+                buildInfo += this.appConfig.getErrorMsg();
                 this.conduitClient.submitDifferentialComment(this.appConfig.getRevisionId(), "Build failed: " + buildInfo);
+                this.conduitClient.submitHarbormasterMessage(this.appConfig.getHarbormasterTargetPHID(), "fail");
             } else if (!status.isFailed() && status.isFinished()) {
-                this.conduitClient.submitDifferentialComment(this.appConfig.getRevisionId(), "Build successful: " +buildInfo);
+                this.conduitClient.submitDifferentialComment(this.appConfig.getRevisionId(), "Build successful");
+                this.conduitClient.submitHarbormasterMessage(this.appConfig.getHarbormasterTargetPHID(), "pass");
             } else {
                 this.conduitClient.submitDifferentialComment(this.appConfig.getRevisionId(), "Build Error : " +buildInfo);
+                this.conduitClient.submitHarbormasterMessage(this.appConfig.getHarbormasterTargetPHID(), "fail");
             }
         }
     }

@@ -14,9 +14,10 @@
 <c:set var="conduitToken" value="${propertiesBean.properties['tcphab.conduitToken']}" />
 <c:set var="pathToArc" value="${propertiesBean.properties['tcphab.pathToArch']}" />
 <c:set var="pathToCode" value="${propertiesBean.properties['tcphab.pathToCode']}" />
-
+<c:set var="errorInfo" value="${propertiesBean.properties['tcphab.errorInfo']}" />
 <tr><td colspan="2">Report build status in real-time to your Phabricator instance.</td></tr>
 <tr><th>Phabricator URL:</th><td><props:textProperty name="tcphab.phabricatorUrl"/></td></tr>
 <tr><th>Conduit Token:</th><td><props:textProperty name="tcphab.conduitToken"/></td></tr>
 <tr><th>Path To Arcanist:</th><td><props:textProperty name="tcphab.pathToArc"/></td></tr>
 <tr><th>Path To Checked Out Code:</th><td><props:textProperty name="tcphab.pathToCode"/></td></tr>
+<tr><th>Phabricator Error Message</th><td><props:textProperty name="tcphab.errorInfo"/></td></tr>

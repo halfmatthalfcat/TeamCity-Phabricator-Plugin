@@ -5,28 +5,15 @@ import jetbrains.buildServer.serverSide.BuildStatisticsOptions;
 import jetbrains.buildServer.serverSide.SRunningBuild;
 import jetbrains.buildServer.serverSide.STest;
 import jetbrains.buildServer.serverSide.STestRun;
+import com.couchmate.teamcity.phabricator.HttpClient;
+import com.couchmate.teamcity.phabricator.HttpRequestBuilder;
 import jetbrains.buildServer.tests.TestInfo;
-import org.apache.http.conn.ssl.NoopHostnameVerifier;
-import org.apache.commons.io.IOUtils;
-import javax.net.ssl.SSLContext;
-import java.security.cert.X509Certificate;
-import java.security.cert.CertificateException;
-import org.apache.http.conn.socket.*;
-import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
-import org.apache.http.conn.ssl.SSLContextBuilder;
-import org.apache.http.conn.socket.PlainConnectionSocketFactory;
-import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
-import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
-import org.apache.http.config.RegistryBuilder;
-import org.apache.http.config.Registry;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.conn.ssl.SSLSocketFactory;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.json.JSONArray;
 import org.json.JSONObject;
-
+import org.apache.commons.io.IOUtils;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -45,7 +32,7 @@ public class BuildTracker implements Runnable {
         Loggers.SERVER.info("Tracking build" + build.getBuildNumber());
     }
 
-    public void run(){
+    public void run() {
         if(!appConfig.isEnabled()){
             try{
                 Map<String, String> params = new HashMap<>();
@@ -57,24 +44,33 @@ public class BuildTracker implements Runnable {
                 this.appConfig.parse();
             } catch (Exception e) { Loggers.SERVER.error("BuildTracker Param Parse", e); }
         }
+
         while (!build.isFinished()){
             if(!appConfig.isEnabled())
-                return;
-
-            build.getBuildStatistics(BuildStatisticsOptions.ALL_TESTS_NO_DETAILS)
-                    .getAllTests()
-                    .forEach(
-                            testRun -> {
-                                if(!this.tests.containsKey(testRun.getTest().getName().getAsString())) {
-                                    this.tests.put(testRun.getTest().getName().getAsString(),
-                                            testRun.getTest());
-                                    sendTestReport(testRun.getTest().getName().getAsString(),
-                                            testRun);
-                                }
+                    return;
+            try {
+            Thread.sleep(10000);
+            } catch (InterruptedException e) {
+            }
+        } 
+        build.getBuildStatistics(BuildStatisticsOptions.ALL_TESTS_NO_DETAILS)
+                .getAllTests()
+                .forEach(
+                        testRun -> {
+                            if(!this.tests.containsKey(testRun.getTest().getName().getAsString())) {
+                                this.tests.put(testRun.getTest().getName().getAsString(),
+                                        testRun.getTest());
+                                sendTestReport(testRun.getTest().getName().getAsString(),
+                                        testRun);
                             }
-                    );
-         }
+                        }
+                );
          Loggers.SERVER.info(this.build.getBuildNumber() + " finished");
+    }
+
+    private CloseableHttpClient createHttpClient() {
+        HttpClient client = new HttpClient(true);
+        return client.getCloseableHttpClient();
     }
 
     private void sendTestReport(String testName, STestRun test) {
@@ -87,7 +83,6 @@ public class BuildTracker implements Runnable {
                 .addFormParam(new StringKeyValue("buildTargetPHID", this.appConfig.getHarbormasterTargetPHID()))
                 .addFormParam(new StringKeyValue("type", "work"))
                 .addFormParam(new StringKeyValue("unit[0][name]", test.getTest().getName().getTestMethodName()))
-                .addFormParam(new StringKeyValue("unit[0][duration]", String.valueOf(test.getDuration())))
                 .addFormParam(new StringKeyValue("unit[0][namespace]", test.getTest().getName().getClassName()));
 
         if(test.getStatus().isSuccessful()){
@@ -95,28 +90,10 @@ public class BuildTracker implements Runnable {
         } else if (test.getStatus().isFailed()){
             httpPost.addFormParam(new StringKeyValue("unit[0][result]", "fail"));
         }
-        try {
-            SSLContext sslContext = new SSLContextBuilder().loadTrustMaterial(null, new TrustSelfSignedStrategy() {
-                @Override
-                public boolean isTrusted(X509Certificate[] chain, String authType) throws CertificateException {
-                    return true;
-                }
-             }).build();
-             SSLConnectionSocketFactory sslConnectionFactory = new SSLConnectionSocketFactory(sslContext, SSLConnectionSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
-             final Registry<ConnectionSocketFactory> reg = RegistryBuilder.<ConnectionSocketFactory>create()
-                                                   .register("https", sslConnectionFactory)
-                                                   .register("http", new PlainConnectionSocketFactory())
-                                                   .build();
-             PoolingHttpClientConnectionManager cm = new PoolingHttpClientConnectionManager(reg);
-             CloseableHttpClient httpClient = HttpClients.custom().setConnectionManager(cm).setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE).build();
-
-            try(CloseableHttpResponse response = httpClient.execute(httpPost.build())){
-                Loggers.SERVER.warn(String.format("Test Response: %s\nTest Body: %s\n",
-                        response.getStatusLine().getStatusCode(),
-                        IOUtils.toString(response.getEntity().getContent())));
-            } catch (Exception e) { Loggers.SERVER.error("Send error", e); }
-        } catch (Exception e) {
-           Loggers.SERVER.error("Send error", e);
-        }
+        try(CloseableHttpResponse response = createHttpClient().execute(httpPost.build())){
+            Loggers.SERVER.warn(String.format("Test Response: %s\nTest Body: %s\n",
+                    response.getStatusLine().getStatusCode(),
+                    IOUtils.toString(response.getEntity().getContent())));
+        } catch (Exception e) { Loggers.SERVER.error("Send error", e); }
     }
 }

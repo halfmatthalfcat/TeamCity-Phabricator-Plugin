@@ -2,28 +2,15 @@ package com.couchmate.teamcity.phabricator.tasks;
 
 import com.couchmate.teamcity.phabricator.AppConfig;
 import com.couchmate.teamcity.phabricator.HttpRequestBuilder;
+import com.couchmate.teamcity.phabricator.HttpClient;
 import com.couchmate.teamcity.phabricator.StringKeyValue;
 import com.couchmate.teamcity.phabricator.conduit.HarbormasterMessage;
 import com.google.gson.Gson;
 import jetbrains.buildServer.agent.BuildFinishedStatus;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.commons.io.IOUtils;
-import javax.net.ssl.SSLContext;
-import java.security.cert.X509Certificate;
-import java.security.cert.CertificateException;
-import org.apache.http.conn.socket.*;
-import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
-import org.apache.http.conn.ssl.SSLContextBuilder;
-import org.apache.http.conn.socket.PlainConnectionSocketFactory;
-import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
-import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
-import org.apache.http.config.RegistryBuilder;
-import org.apache.http.config.Registry;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.conn.ssl.SSLSocketFactory;
-import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
+import org.apache.http.client.methods.HttpPost;
 
 /**
  * Created by mjo20 on 10/31/2015.
@@ -75,25 +62,8 @@ public class HarbormasterBuildStatus extends Task {
     }
 
     private CloseableHttpClient createHttpClient() {
-        try {
-             SSLContext sslContext = new SSLContextBuilder().loadTrustMaterial(null, new TrustSelfSignedStrategy() {
-                    @Override
-                    public boolean isTrusted(X509Certificate[] chain, String authType) throws CertificateException {
-                        return true;
-                    }
-            }).build();
-            SSLConnectionSocketFactory sslConnectionFactory = new SSLConnectionSocketFactory(sslContext, SSLConnectionSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
-            final Registry<ConnectionSocketFactory> reg = RegistryBuilder.<ConnectionSocketFactory>create()
-                                                   .register("https", sslConnectionFactory)
-                                                   .register("http", new PlainConnectionSocketFactory())
-                                                   .build();
-            PoolingHttpClientConnectionManager cm = new PoolingHttpClientConnectionManager(reg);
-            CloseableHttpClient httpClient = HttpClients.custom().setConnectionManager(cm).setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE).build();
-            return httpClient;
-        } catch (Exception e) {
-           e.printStackTrace();
-           return null;
-        }
+        HttpClient client = new HttpClient(true);
+        return client.getCloseableHttpClient();
     }
 
     private String parseTeamCityBuildStatus(BuildFinishedStatus buildFinishedStatus){

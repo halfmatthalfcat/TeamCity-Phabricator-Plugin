@@ -1,28 +1,15 @@
 package com.couchmate.teamcity.phabricator.conduit;
 
 import com.couchmate.teamcity.phabricator.HttpRequestBuilder;
+import com.couchmate.teamcity.phabricator.HttpClient;
 import com.couchmate.teamcity.phabricator.TCPhabException;
 import com.couchmate.teamcity.phabricator.PhabLogger;
 import com.couchmate.teamcity.phabricator.StringKeyValue;
 import com.google.gson.Gson;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.commons.io.IOUtils;
-import javax.net.ssl.SSLContext;
-import java.security.cert.X509Certificate;
-import java.security.cert.CertificateException;
-import org.apache.http.conn.socket.*;
-import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
-import org.apache.http.conn.ssl.SSLContextBuilder;
-import org.apache.http.conn.socket.PlainConnectionSocketFactory;
-import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
-import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
-import org.apache.http.config.RegistryBuilder;
-import org.apache.http.config.Registry;
 import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.conn.ssl.SSLSocketFactory;
-import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -82,25 +69,8 @@ public final class ConduitClient {
     }
 
     private CloseableHttpClient createHttpClient() {
-        try {
-             SSLContext sslContext = new SSLContextBuilder().loadTrustMaterial(null, new TrustSelfSignedStrategy() {
-                    @Override
-                    public boolean isTrusted(X509Certificate[] chain, String authType) throws CertificateException {
-                        return true;
-                    }
-            }).build();
-            SSLConnectionSocketFactory sslConnectionFactory = new SSLConnectionSocketFactory(sslContext, SSLConnectionSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
-            final Registry<ConnectionSocketFactory> reg = RegistryBuilder.<ConnectionSocketFactory>create()
-                                                   .register("https", sslConnectionFactory)
-                                                   .register("http", new PlainConnectionSocketFactory())
-                                                   .build();
-            PoolingHttpClientConnectionManager cm = new PoolingHttpClientConnectionManager(reg);
-            CloseableHttpClient httpClient = HttpClients.custom().setConnectionManager(cm).setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE).build();
-            return httpClient;
-        } catch (Exception e) {
-           this.logger.warn("http client error", e);
-           return null;
-        }
+        HttpClient client = new HttpClient(true);
+        return client.getCloseableHttpClient();
     }
 
     public Result submitDifferentialComment(String diffId, String comment){
@@ -130,7 +100,7 @@ public final class ConduitClient {
 
     }
 
-    public Result submitHarbormasterMessage(HarbormasterMessage harbormasterMessage){
+    public Result submitHarbormasterMessage(String buildTargetPHID, String type){
         final String HARBORMASTER_MESSAGE = "/api/harbormaster.sendmessage";
 
         try(CloseableHttpClient httpClient = this.createHttpClient()){
@@ -141,9 +111,10 @@ public final class ConduitClient {
                             .setHost(this.conduitURL)
                             .setScheme(this.conduitScheme)
                             .setPath(HARBORMASTER_MESSAGE)
-                            .setBody(gson.toJson(
-                                    harbormasterMessage
-                            )).build()
+                            .addFormParam(new StringKeyValue("api.token", this.apiKey))
+                            .addFormParam(new StringKeyValue("type", type))
+                            .addFormParam(new StringKeyValue("buildTargetPHID", buildTargetPHID))
+                            .build()
                 )
             ){
                 return handleResponse(response);
