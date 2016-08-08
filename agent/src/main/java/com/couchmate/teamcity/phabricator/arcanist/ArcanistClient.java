@@ -4,6 +4,7 @@ import com.couchmate.teamcity.phabricator.CommandBuilder;
 import com.couchmate.teamcity.phabricator.KeyValue;
 import com.couchmate.teamcity.phabricator.StringKeyValue;
 import com.couchmate.teamcity.phabricator.TCPhabException;
+import com.couchmate.teamcity.phabricator.PhabLogger;
 
 
 import java.util.regex.Matcher;
@@ -36,20 +37,20 @@ public final class ArcanistClient {
      * @return {@link CommandBuilder.Command} The built Command
      */
     public CommandBuilder.Command patch(
-            final String diffId
+            final String revisionId
     ){
         try {
+            //System.out.println("revision Id patching " + revisionId);
             return new CommandBuilder()
                     .setCommand(arcPath)
                     .setAction("patch")
+                    .setArg(revisionId.startsWith("D") ? revisionId : "D" + revisionId)
                     .setWorkingDir(this.workingDir)
                     .setFlag("--nobranch")
                     .setFlag("--nocommit")
-                    .setArg("--diff")
-                    .setArg(formatDiffId(diffId))
                     .setFlagWithValueEquals(new StringKeyValue("--conduit-token", this.conduitToken))
                     .build();
-        } catch (TCPhabException e) { e.printStackTrace(); return null; }
+        } catch (Exception e) { e.printStackTrace(); return null; }
     }
 
     public CommandBuilder.Command which(
