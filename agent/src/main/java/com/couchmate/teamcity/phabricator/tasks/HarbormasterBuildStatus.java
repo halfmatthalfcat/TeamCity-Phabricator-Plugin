@@ -10,6 +10,8 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 
+import java.net.URL;
+
 /**
  * Created by mjo20 on 10/31/2015.
  */
@@ -35,10 +37,12 @@ public class HarbormasterBuildStatus extends Task {
     @Override
     protected void setup() {
         try {
+            URL phabricatorURL = this.appConfig.getPhabricatorUrl();
             this.httpPost = (HttpPost) new HttpRequestBuilder()
                     .post()
-                    .setScheme("http")
-                    .setHost(this.appConfig.getPhabricatorUrl())
+                    .setScheme(phabricatorURL.getProtocol())
+                    .setHost(phabricatorURL.getHost())
+                    .setPort(phabricatorURL.getPort())
                     .setPath("/api/harbormaster.sendmessage")
                     .addFormParam(new StringKeyValue("api.token", this.appConfig.getConduitToken()))
                     .addFormParam(new StringKeyValue("type", parseTeamCityBuildStatus(this.buildFinishedStatus)))

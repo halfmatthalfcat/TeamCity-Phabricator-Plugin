@@ -14,10 +14,12 @@ import org.apache.http.impl.client.HttpClients;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 public class BuildTracker implements Runnable {
 
@@ -66,18 +68,26 @@ public class BuildTracker implements Runnable {
     }
 
     private void sendTestReport(String testName, STestRun test){
-        HttpRequestBuilder httpPost = new HttpRequestBuilder()
-                .post()
-                .setHost(this.appConfig.getPhabricatorUrl())
-                .setScheme("http")
-                .setPath("/api/harbormaster.sendmessage")
-                        //.setBody(payload.toString())
-                .addFormParam(new StringKeyValue("api.token", this.appConfig.getConduitToken()))
-                .addFormParam(new StringKeyValue("buildTargetPHID", this.appConfig.getHarbormasterTargetPHID()))
-                .addFormParam(new StringKeyValue("type", "work"))
-                .addFormParam(new StringKeyValue("unit[0][name]", test.getTest().getName().getTestMethodName()))
-                //.addFormParam(new StringKeyValue("unit[0][duration]", String.valueOf(test.getDuration())))
-                .addFormParam(new StringKeyValue("unit[0][namespace]", test.getTest().getName().getClassName()));
+        URL phabricatorURL = this.appConfig.getPhabricatorUrl();
+        HttpRequestBuilder httpPost;
+        try {
+            httpPost = new HttpRequestBuilder()
+                    .post()
+                    .setHost(phabricatorURL.getHost())
+                    .setScheme(phabricatorURL.getProtocol())
+                    .setPort(phabricatorURL.getPort())
+                    .setPath("/api/harbormaster.sendmessage")
+                    //.setBody(payload.toString())
+                    .addFormParam(new StringKeyValue("api.token", this.appConfig.getConduitToken()))
+                    .addFormParam(new StringKeyValue("buildTargetPHID", this.appConfig.getHarbormasterTargetPHID()))
+                    .addFormParam(new StringKeyValue("type", "work"))
+                    .addFormParam(new StringKeyValue("unit[0][name]", test.getTest().getName().getTestMethodName()))
+                    //.addFormParam(new StringKeyValue("unit[0][duration]", String.valueOf(test.getDuration())))
+                    .addFormParam(new StringKeyValue("unit[0][namespace]", test.getTest().getName().getClassName()));
+        } catch (Exception e) {
+            Loggers.SERVER.warn("HTTP request builder error", e);
+            return;
+        }
 
         if(test.getStatus().isSuccessful()){
             httpPost.addFormParam(new StringKeyValue("unit[0][result]", "pass"));

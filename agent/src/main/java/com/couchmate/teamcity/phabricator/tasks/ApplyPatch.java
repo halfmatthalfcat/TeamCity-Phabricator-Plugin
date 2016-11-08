@@ -32,7 +32,7 @@ public class ApplyPatch extends Task {
         this.gitClient = new GitClient(this.appConfig.getWorkingDir());
         this.arcanistClient = new ArcanistClient(
                 this.appConfig.getConduitToken(), this.appConfig.getWorkingDir(), this.appConfig.getArcPath());
-        this.conduitClient = new ConduitClient(this.appConfig.getPhabricatorUrl(), this.appConfig.getConduitToken());
+        this.conduitClient = new ConduitClient(this.appConfig.getPhabricatorUrl().toString(), this.appConfig.getConduitToken());
     }
 
     @Override
