@@ -1,3 +1,5 @@
+***Note***: I'm not actively maintaining this repo at the moment as I'm not using Phabricator or TC. Feel free to submit PRs or fork for your own use!.
+
 #TeamCity Phabricator Plugin
 Real-time build triggers and reporting with JetBrain's TeamCity and Phacility's Phabricator (Harbormaster)
 
