@@ -3,6 +3,8 @@ package com.couchmate.teamcity.phabricator;
 import jetbrains.buildServer.log.Loggers;
 
 import java.io.File;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Map;
 import static com.couchmate.teamcity.phabricator.CommonUtils.isNullOrEmpty;
 
@@ -12,7 +14,7 @@ public final class AppConfig {
 
     private PhabLogger logger;
 
-    private String phabricatorUrl;
+    private URL phabricatorUrl;
     private String conduitToken;
     private String arcPath;
     private String diffId;
@@ -42,7 +44,14 @@ public final class AppConfig {
                 switch(value){
                     case PHAB_URL:
                         logger.info(String.format("Found phabricatorUrl: %s", params.get(PHAB_URL)));
-                        this.phabricatorUrl = params.get(PHAB_URL);
+                        try {
+                            String input = params.get(PHAB_URL);
+                            logger.info(String.format("Found phabricatorUrl: %s", input));
+                            this.phabricatorUrl = parsePhabricatorURL(input);
+                        }
+                        catch (MalformedURLException e) {
+                            logger.warn(String.format("Failed to parse phabricatorURL: %s", params.get(PHAB_URL)), e);
+                        }
                         break;
                     case CONDUIT_TOKEN:
                         logger.info(String.format("Found conduitToken: %s", params.get(CONDUIT_TOKEN)));
@@ -73,7 +82,7 @@ public final class AppConfig {
         if(
                 !isNullOrEmpty(conduitToken) &&
                 !isNullOrEmpty(arcPath) &&
-                !isNullOrEmpty(phabricatorUrl) &&
+                !isNullOrEmpty(phabricatorUrl.toString()) &&
                 !isNullOrEmpty(diffId) &&
                 !isNullOrEmpty(harbormasterTargetPHID)){
             this.enabled = true;
@@ -100,7 +109,7 @@ public final class AppConfig {
         return this.harbormasterTargetPHID;
     }
 
-    public String getPhabricatorUrl() {
+    public URL getPhabricatorUrl() {
         return this.phabricatorUrl;
     }
 
@@ -116,5 +125,21 @@ public final class AppConfig {
 
     public Boolean isEnabled() {
         return this.enabled;
+    }
+
+    private URL parsePhabricatorURL(String input) throws MalformedURLException {
+        URL inputURL = new URL(input);
+        String hostname = inputURL.getHost();
+        String scheme = inputURL.getProtocol();
+        if (scheme == null)
+            scheme = "http";
+        int port = inputURL.getPort();
+        if (port == -1) {
+            if (scheme == "https")
+                port = 443;
+            else
+                port = 80;
+        }
+        return inputURL;
     }
 }
