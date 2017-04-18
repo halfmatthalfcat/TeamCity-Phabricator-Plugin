@@ -60,44 +60,31 @@ final class HarbormasterTeamCityBuildStepImplementation
         ->addRevisionId($variables['buildable.revision'])
         ->build();
 
-    $future = id(new HTTPFuture($uri, $payload))
-      ->setMethod($method)
-      ->addHeader('Content-Type', $contentType)
-      ->setTimeout(60);
-
+    $process = curl_init($uri);
     $credential_phid = $this->getSetting('credential');
     if ($credential_phid) {
-      $key = PassphrasePasswordKey::loadFromPHID(
-        $credential_phid,
-        $viewer);
-      $future->setHTTPBasicAuthCredentials(
-        $key->getUsernameEnvelope()->openEnvelope(),
-        $key->getPasswordEnvelope());
+       $key = PassphrasePasswordKey::loadFromPHID(
+              $credential_phid,
+              $viewer);
+       $username = $key->getUsernameEnvelope()->openEnvelope();
+       $password = $key->getPasswordEnvelope();
+       curl_setopt($process, CURLOPT_USERPWD, $username . ":" . $password);
     }
 
-    $this->resolveFutures(
-      $build,
-      $build_target,
-      array($future));
-
-    list($status, $body, $headers) = $future->resolve();
-
-    $header_lines = array();
-
-    // TODO: We don't currently preserve the entire "HTTP" response header, but
-    // should. Once we do, reproduce it here faithfully.
-    $status_code = $status->getStatusCode();
-    $header_lines[] = "HTTP {$status_code}";
-
-    foreach ($headers as $header) {
-      list($head, $tail) = $header;
-      $header_lines[] = "{$head}: {$tail}";
-    }
-    $header_lines = implode("\n", $header_lines);
+    curl_setopt($process, CURLOPT_HTTPHEADER, array('Content-Type: ' . $contentType));
+    curl_setopt($process, CURLOPT_HEADER, 1);
+    curl_setopt($process, CURLOPT_TIMEOUT, 30);
+    curl_setopt($process, CURLOPT_POST, 1);
+    curl_setopt($process, CURLOPT_POSTFIELDS, $payload);
+    curl_setopt($process, CURLOPT_RETURNTRANSFER, TRUE);
+    $return = curl_exec($process);
+    $status = curl_getinfo($process, CURLINFO_HTTP_CODE);
+    curl_close($process);
+    list($headers, $body) = explode("\r\n\r\n", $return, 2);
 
     $build_target
       ->newLog($uri, 'http.head')
-      ->append($header_lines);
+      ->append($headers);
 
     $build_target
       ->newLog($uri, 'http.body')
